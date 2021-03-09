@@ -2,7 +2,9 @@ Server/vsproj/*
 !Server/vsproj/premake5.exe
 !Server/vsproj/premake5.lua
 Server/gcc/*
+!Server/gcc/*.dll
 server/windows/*
+!server/windows/*.dll
 
 
 Client/*.exe
