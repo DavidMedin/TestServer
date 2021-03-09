@@ -1,0 +1,19 @@
+{
+	"files.associations": {
+		"string.h": "c",
+		"stdlib.h": "c",
+		"limits": "cpp",
+		"new": "cpp",
+		"*.tcc": "cpp",
+		"typeinfo": "cpp",
+		"dirent.h": "c",
+		"unistd.h": "c",
+		"game.h": "c",
+		"sdl_net.h": "c",
+		"list.h": "c",
+		"sdl.h": "c"
+	},
+	"Lua.diagnostics.disable": [
+		"undefined-global"
+	]
+}
