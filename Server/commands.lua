@@ -3,4 +3,5 @@ function test(input)
 end
 function Quit()
 	ServerQuit()
+	CmdQuit=1
 end

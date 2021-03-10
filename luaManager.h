@@ -13,6 +13,8 @@ void InitLua(){
 	state = luaL_newstate();
 	luaL_openlibs(state);
 	OpenLuaServerLib(state);
+	lua_pushnumber(state,0);
+	lua_setglobal(state,"CmdQuit");//when this is 1, cmd will quit
 }
 void RefreshLuaFiles(){
 	//remove all files

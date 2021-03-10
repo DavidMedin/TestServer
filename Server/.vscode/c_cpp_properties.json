@@ -5,8 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${vcpkgRoot}/x64-windows/include",
-                "C:\\Dev\\SDL2\\x86_64-w64-mingw32\\include\\sdl2",
-                "C:\\Dev\\SDL2_net\\x86_64-w64-mingw32\\include\\SDL2",
+                "C:\\Dev\\SDL2\\x86_64-w64-mingw32\\include",
+                "C:\\Dev\\SDL2_net\\x86_64-w64-mingw32\\include",
                 "C:\\Dev\\Lua5.4\\include"
             ],
             "defines": [

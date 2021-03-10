@@ -1,4 +1,5 @@
 #include "server.h"
+
 #include "luaServerLib.c"
 IPaddress ip;
 TCPsocket sock;
@@ -26,7 +27,7 @@ void KillConnection(){
 		printf("failed to send all data: %s\n",SDLNet_GetError());
 	}
 }
-void ParseCmdLine(){
+int ParseCmdLine(){
 	//get text input as commands
 	List chunks=0;
 	unsigned int byteCount=0;
@@ -51,7 +52,7 @@ void ParseCmdLine(){
 			printf("not done %lli\n",tmp->dataSize);
 		}
 	}
-	if (byteCount == 0) { printf("fgets got 0 bytes?\n"); return; }
+	if (byteCount == 0) { printf("fgets got 0 bytes?\n"); return 0; }
 	//have gone through the entire stream
 	//contiguize chunks into one
 	char* bigString = malloc(byteCount);
@@ -77,7 +78,7 @@ void ParseCmdLine(){
 		printf("command %s doesn't exit!\n",token);
 		lua_pop(state,1);
 		free(bigString);
-		return;
+		return 1;
 	}
 	int argumentCount=0;
 	token = strtok_s(NULL," ",&context);
@@ -97,6 +98,11 @@ void ParseCmdLine(){
 	if(lua_pcall(state,argumentCount,0,0)!=LUA_OK)
 		printf("oh no, lua threw an error! : %s\n",lua_tostring(state,-1));
 	free(bigString);
+	lua_getglobal(state,"CmdQuit");
+	if(lua_tonumber(state,-1)==1){
+		return 0;	
+	}
+	return 1;
 }
 
 
@@ -111,11 +117,10 @@ int main(int argv, char** argc){
 	}
 	InitLua();
 
-	while(1)
-		ParseCmdLine();
-
-
 	Connect();
+	while(ParseCmdLine());
+
+
 	KillConnection();
 
 	//disconnect
