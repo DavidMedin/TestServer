@@ -1,15 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-// #include <unistd.h>
-
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_net.h>
-
-#include "../game.h"
-#include "../list.h"
-#include "../luaManager.h"
+#include "server.h"
+#include "luaServerLib.c"
 IPaddress ip;
 TCPsocket sock;
 
@@ -38,7 +28,7 @@ void KillConnection(){
 }
 void ParseCmdLine(){
 	//get text input as commands
-	List* chunks=0;
+	List chunks=0;
 	unsigned int byteCount=0;
 	while(1){
 		char* buff = malloc(256);
@@ -52,12 +42,12 @@ void ParseCmdLine(){
 		}
 		else if(rezLen!=255){
 			byteCount += rezLen+1;//include the \0
-			List* tmp = PushBack(&chunks,buff,rezLen+1);//include the \0
+			List tmp = PushBack(&chunks,buff,rezLen+1);//include the \0
 			break;
 		}
 		else{
 			byteCount += 255;//excluding /0
-			List* tmp = PushBack(&chunks,buff,256);
+			List tmp = PushBack(&chunks,buff,256);
 			printf("not done %lli\n",tmp->dataSize);
 		}
 	}
@@ -66,7 +56,7 @@ void ParseCmdLine(){
 	//contiguize chunks into one
 	char* bigString = malloc(byteCount);
 	int start=0;
-	List* iter=chunks;
+	List iter=chunks;
 	do{
 		memcpy(bigString+start,iter->data,iter->dataSize-1);
 		start+=iter->dataSize-1;//remove the \0
@@ -108,6 +98,7 @@ void ParseCmdLine(){
 		printf("oh no, lua threw an error! : %s\n",lua_tostring(state,-1));
 	free(bigString);
 }
+
 
 int main(int argv, char** argc){
 	if(SDL_Init(SDL_INIT_VIDEO) < 0){

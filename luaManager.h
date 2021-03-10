@@ -5,11 +5,14 @@
 #include <dirent.h>
 #include "list.h"
 
+extern void OpenLuaServerLib(lua_State* L);
+
 lua_State* state;
-List* luaFiles=0;
+List luaFiles=0;
 void InitLua(){
 	state = luaL_newstate();
 	luaL_openlibs(state);
+	OpenLuaServerLib(state);
 }
 void RefreshLuaFiles(){
 	//remove all files
@@ -34,12 +37,11 @@ void RefreshLuaFiles(){
 		printf("Couldn't open directory \".\"\n");
 }
 void RefreshCmdFile() {
-	List* iter = luaFiles;
+	List iter = luaFiles;
 	while (iter!=NULL) {
 		if (strcmp(iter->data, "commands.lua") == 0) {
 			RemoveNode(&iter);
-			if (iter == NULL) luaFiles = iter;
-			break;//found the file. And iter is now NULL so the next line is garbage
+			break;//found the file.
 		}
 		iter = iter->next;
 	}
@@ -47,12 +49,12 @@ void RefreshCmdFile() {
 		printf("error: %s\n", lua_tostring(state, -1));
 	else {
 		char* data = malloc(14);
-		strcpy(data, "../commands.lua");
+		strcpy(data, "commands.lua");
 		PushBack(&luaFiles, data,14);
 	}
 }
 void ExecuteLuaFile(char* fileName){//ExecuteLuaFile("dir");
-	List* iter=luaFiles;
+	List iter=luaFiles;
 	do{
 		char buff[256]={0};//assuming this is zeroed by default
 		memcpy(buff,fileName,strlen(fileName));//strleng doesn't include \0
