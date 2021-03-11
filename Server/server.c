@@ -116,6 +116,7 @@ int main(int argv, char** argc){
 		return 0;
 	}
 	InitLua();
+	printf("hello\n");
 
 	Connect();
 	while(ParseCmdLine());
