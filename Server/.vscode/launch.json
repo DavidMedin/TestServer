@@ -30,6 +30,7 @@
 			],
 			"MIMode": "gdb",
 			"miDebuggerPath": "/usr/bin/gdb",
+			// "miDebuggerPath": "/usr/share/gdb",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",

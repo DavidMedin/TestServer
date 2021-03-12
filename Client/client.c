@@ -7,10 +7,12 @@ IPaddress serverAddress;
 TCPsocket sock;
 
 int main(int argv,char** argc){
+	#ifdef _WIN64
 	if(SDL_Init(SDL_INIT_VIDEO)<0){
 		printf("Failed to initialize SDL!\n");
 		return 0;
 	}
+	#endif
 	if(SDLNet_Init()==-1){
 		printf("Failed to initialize SDL!\n");
 		return 0;

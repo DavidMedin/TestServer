@@ -1,4 +1,6 @@
 Server/build
-
-
-Client/*.exe
+Client/build
+!**/Server.exe
+!**/Client.exe
+!**/Client
+!**/*.dll
