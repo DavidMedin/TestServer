@@ -49,7 +49,7 @@ int ParseCmdLine(){
 		else{
 			byteCount += 255;//excluding /0
 			List tmp = PushBack(&chunks,buff,256);
-			printf("not done %lli\n",tmp->dataSize);
+			printf("not done %li\n",tmp->dataSize);
 		}
 	}
 	if (byteCount == 0) { printf("fgets got 0 bytes?\n"); return 0; }
@@ -72,7 +72,7 @@ int ParseCmdLine(){
 
 	char* context=0;
 	char* token=0;
-	token = strtok_s(bigString," ",&context);
+	token = strtok_safe(bigString," ",&context);
 	//token is function name
 	if(lua_getglobal(state,token)==LUA_TNIL){//pushes token to the stack, is to be called as a function
 		printf("command %s doesn't exit!\n",token);
@@ -81,7 +81,7 @@ int ParseCmdLine(){
 		return 1;
 	}
 	int argumentCount=0;
-	token = strtok_s(NULL," ",&context);
+	token = strtok_safe(NULL," ",&context);
 	while(token){
 		argumentCount++;
 		printf("%s\n",token);
@@ -93,7 +93,7 @@ int ParseCmdLine(){
 			lua_pushstring(state,token);
 		}else
 			lua_pushnumber(state,(double)num);
-		token = strtok_s(NULL," ",&context);
+		token = strtok_safe(NULL," ",&context);
 	}
 	if(lua_pcall(state,argumentCount,0,0)!=LUA_OK)
 		printf("oh no, lua threw an error! : %s\n",lua_tostring(state,-1));
@@ -107,16 +107,18 @@ int ParseCmdLine(){
 
 
 int main(int argv, char** argc){
+	#ifdef _WIN64
 	if(SDL_Init(SDL_INIT_VIDEO) < 0){
 		printf("failed to initialize SDL!\n");
 		return 0;
 	}
+	#endif
 	if(SDLNet_Init()==-1){
 		printf("failed to initialize SDL_net!\n");
 		return 0;
 	}
 	InitLua();
-	printf("hello\n");
+	printf("hello, my guy\n");
 
 	Connect();
 	while(ParseCmdLine());

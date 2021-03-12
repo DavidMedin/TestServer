@@ -24,9 +24,10 @@ void RefreshLuaFiles(){
 	if((dir=opendir(".")) != NULL){//interesting
 		while((ent=readdir(dir))!=NULL){
 			if(strstr(ent->d_name,"lua")){//jank but whatever
-				char* data=malloc(ent->d_namlen+1);
-				memcpy(data,ent->d_name,ent->d_namlen+1);
-				PushBack(&luaFiles,data,ent->d_namlen+1);
+				int nameLen = strlen(ent->d_name)+1;
+				char* data=malloc(nameLen);
+				memcpy(data,ent->d_name,nameLen);
+				PushBack(&luaFiles,data,nameLen);
 				//execute the file
 				if(luaL_dofile(state,data)){
 					printf("error: %s\n",lua_tostring(state,-1));
