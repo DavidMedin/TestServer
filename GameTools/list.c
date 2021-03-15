@@ -1,14 +1,5 @@
-#pragma once
-#include <stdio.h>
-#include <stdlib.h>
+#include "list.h"
 
-typedef struct List_t{
-	struct List_t** root;//points to a list pointer. For example, a pointer to luaFiles in luaManager.h
-	struct List_t* next;
-	struct List_t* last;
-	void* data;
-	size_t dataSize;//in bytes
-}*List;
 //0 is before list, increments from there
 List AddNode(List* list,int index,void* data,size_t dataSize){
 	List newNode = (List)malloc(sizeof(struct List_t));
@@ -63,20 +54,21 @@ List PushBack(List* list,void* data,size_t dataSize){
 	}
 	return AddNode(list,index,data,dataSize);
 }
-void RemoveNode(List* list){
+void _RemoveNode(List* list,int freeData){
 	if((*list)->last==NULL && (*list)->next==NULL){
 		//just destroy
 		List* root = (*list)->root;
-		free((*list)->data);
+		if(freeData) free((*list)->data);
 		free(*list);
 		*root=0;
+		*list=0;
 	}else
 	if((*list)->last==NULL){
 		//first in List
 		List tmp = *list;//storing for freeing later
 		*list=(*list)->next;//make list equal to the next list node
 		(*list)->last = NULL;//get rid of last
-		free(tmp->data);//free the dynamic mem
+		if(freeData) free(tmp->data);//free the dynamic mem
 		free(tmp);
 	}else if((*list)->last!=NULL && (*list)->next!=NULL){
 		//somewhere in the list
@@ -85,16 +77,23 @@ void RemoveNode(List* list){
 		(*list)->last->next = (*list)->next;//point back to front of this node
 		*list=(*list)->next;//the next node is what list will point to now
 		//free tmp & data
-		free(tmp->data);
+		if(freeData) free(tmp->data);
 		free(tmp);
 	}else if((*list)->next==NULL){
 		//last in list
 		List tmp = *list;
 		(*list)->last->next=NULL;
 		*list = (*list)->last;
-		free(tmp->data);
+		if(freeData) free(tmp->data);
 		free(tmp);
 	}
+}
+void RemoveNode(List* list){
+	_RemoveNode(list,1);
+}
+//does not free data
+void RemoveNodeNF(List* list){
+	_RemoveNode(list,0);
 }
 //removes/frees everything in list
 //warning, this will not deallocate ANY of the data's data (but will dealocate the member "data")

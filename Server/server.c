@@ -1,109 +1,68 @@
 #include "server.h"
 
-#include "luaServerLib.c"
+
 IPaddress ip;
 TCPsocket sock;
 
-TCPsocket clientSock;
+// TCPsocket clientSock;
+int cmdQuit=0;
+SDL_mutex* cmdSignal;
 
-void Connect(){
+List clientSocks;
+SDL_mutex* sockMutex;
+
+
+int SDLCALL Connect(void* param){
 	//resolve IP address
 	SDLNet_ResolveHost(&ip,NULL,1234);
 	sock=SDLNet_TCP_Open(&ip);
 	if(sock==NULL){
 		printf("TCP Open Error: %s\n", SDLNet_GetError());
-		return;
+		return 0;
 	}
+	TCPsocket tmpSock;
 	do{
-		clientSock = SDLNet_TCP_Accept(sock);
-	}while(clientSock==NULL);
-	printf("Connected!\n");
+	 tmpSock = SDLNet_TCP_Accept(sock);
+	 if(tmpSock){
+		TCPsocket* allocSock = malloc(sizeof(TCPsocket));
+		*allocSock = tmpSock;
+		SDL_LockMutex(sockMutex);
+		PushBack(&clientSocks,allocSock,sizeof(TCPsocket));
+		SDL_UnlockMutex(sockMutex);
+		printf("Connected!\n");
+	 }
+	}while(cmdQuit==0);
+	return 1;
+}
+
+void SendToAllClients(void* data,unsigned int dataSize){
+	SDL_LockMutex(sockMutex);
+	List iter = clientSocks;
+	while(iter){
+		int sentN = SDLNet_TCP_Send(*(TCPsocket*)iter->data,data,dataSize);
+		if(sentN != dataSize){
+			// printf("failed to send all data (%d of %u sent): %s message %s\n",sentN,dataSize,SDLNet_GetError(),(char*)data);
+			printf("Disconnecting\n");
+			SDLNet_TCP_Close(*(TCPsocket*)iter->data);
+			RemoveNode(&iter);
+		}else
+		iter=iter->next;
+	}
+	SDL_UnlockMutex(sockMutex);
 }
 void KillConnection(){
 	printf("sending kill messege\n");
 	int msg = Quit;
-	int sentN = SDLNet_TCP_Send(clientSock,&msg,sizeof(msg));
-	if(sentN != sizeof(msg)){
-		printf("failed to send all data: %s\n",SDLNet_GetError());
-	}
-}
-int ParseCmdLine(){
-	//get text input as commands
-	List chunks=0;
-	unsigned int byteCount=0;
-	while(1){
-		char* buff = malloc(256);
-		putc((int)'>',stdout);
-		char* rez = fgets(buff,256,stdin);
-		size_t rezLen = strlen(rez);
-		if(rez==NULL){
-			free(buff);//not needed
-			printf("oh no, fgets raised an error!\n");
-			break;
+	List iter = clientSocks;
+	while(iter){
+		int sentN = SDLNet_TCP_Send(*((TCPsocket*)iter->data), &msg, sizeof(msg));
+		if(sentN != sizeof(msg)){
+			printf("failed to send all data (%d of %d sent): %s\n",sentN,(int)sizeof(msg),SDLNet_GetError());
 		}
-		else if(rezLen!=255){
-			byteCount += rezLen+1;//include the \0
-			List tmp = PushBack(&chunks,buff,rezLen+1);//include the \0
-			break;
-		}
-		else{
-			byteCount += 255;//excluding /0
-			List tmp = PushBack(&chunks,buff,256);
-			printf("not done %li\n",tmp->dataSize);
-		}
-	}
-	if (byteCount == 0) { printf("fgets got 0 bytes?\n"); return 0; }
-	//have gone through the entire stream
-	//contiguize chunks into one
-	char* bigString = malloc(byteCount);
-	int start=0;
-	List iter=chunks;
-	do{
-		memcpy(bigString+start,iter->data,iter->dataSize-1);
-		start+=iter->dataSize-1;//remove the \0
 		iter=iter->next;
-	}while(iter!=NULL);
-	*(bigString+byteCount-1)=(char)0;//add the null character to the end
-	*(bigString+byteCount-2)=(char)0;//get rid of the \n
-	// printf("%s\n",bigString);
-	FreeList(&chunks);
-	//refresh lua files for hot reloading
-	RefreshCmdFile();
-
-	char* context=0;
-	char* token=0;
-	token = strtok_safe(bigString," ",&context);
-	//token is function name
-	if(lua_getglobal(state,token)==LUA_TNIL){//pushes token to the stack, is to be called as a function
-		printf("command %s doesn't exit!\n",token);
-		lua_pop(state,1);
-		free(bigString);
-		return 1;
 	}
-	int argumentCount=0;
-	token = strtok_safe(NULL," ",&context);
-	while(token){
-		argumentCount++;
-		printf("%s\n",token);
-		//extract string if there is one there
-		char* end=0;
-		long num = strtol(token,&end,10);
-		if(token==end){
-			printf("%s is not a number\n",token);
-			lua_pushstring(state,token);
-		}else
-			lua_pushnumber(state,(double)num);
-		token = strtok_safe(NULL," ",&context);
-	}
-	if(lua_pcall(state,argumentCount,0,0)!=LUA_OK)
-		printf("oh no, lua threw an error! : %s\n",lua_tostring(state,-1));
-	free(bigString);
-	lua_getglobal(state,"CmdQuit");
-	if(lua_tonumber(state,-1)==1){
-		return 0;	
-	}
-	return 1;
 }
+
 
 
 int main(int argv, char** argc){
@@ -117,18 +76,47 @@ int main(int argv, char** argc){
 		printf("failed to initialize SDL_net!\n");
 		return 0;
 	}
-	InitLua();
+	InitLua(OpenLuaServerLib);
 	printf("hello, my guy\n");
 
-	Connect();
-	while(ParseCmdLine());
-
-
+	//create the socket list mutex
+	sockMutex = SDL_CreateMutex();
+	if(!sockMutex)
+		printf("Couldn't create socket list mutex: %s\n",SDL_GetError());
+	SDL_Thread* connectingThd = SDL_CreateThread(Connect,"Connect",NULL);
+	if(!connectingThd)
+		printf("Couldn't create connecting thread!: %s\n",SDL_GetError());
+		//resolve IP address
+	// SDLNet_ResolveHost(&ip, NULL, 1234);
+	// sock = SDLNet_TCP_Open(&ip);
+	// if (sock == NULL) {
+	// 	printf("TCP Open Error: %s\n", SDLNet_GetError());
+	// 	return 0;
+	// }
+	// while(1){
+	// 	TCPsocket tmpSock = SDLNet_TCP_Accept(sock);
+	// 	if (tmpSock) {
+	// 		TCPsocket* allocSock = malloc(sizeof(TCPsocket));
+	// 		*allocSock = tmpSock;
+	// 		//SDL_LockMutex(sockMutex);
+	// 		PushBack(&clientSocks, allocSock, sizeof(TCPsocket));
+	// 		//SDL_UnlockMutex(sockMutex);
+	// 		printf("Connected!\n");
+	// 		break;
+	// 	}
+	// }
+	while(!cmdQuit) ParseCmdLine();
+	int stat;
+	SDL_WaitThread(connectingThd,&stat);
+	SDL_DestroyMutex(sockMutex);//no longer needed, in single threaded 'mode'
 	KillConnection();
 
 	//disconnect
-	SDLNet_TCP_Close(sock);
-	printf("Disconnected!\n");
+	while(clientSocks){
+		SDLNet_TCP_Close(*(TCPsocket*)clientSocks->data);
+		RemoveNode(&clientSocks);
+		printf("Disconnected!\n");
+	}
 
 	//cleanup
 	CleanupLua();

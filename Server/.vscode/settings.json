@@ -1,0 +1,14 @@
+{
+	"files.associations": {
+		"server.h": "c",
+		"game.h": "c",
+		"luamanager.h": "c",
+		"luaserverlib.h": "c",
+		"stdio.h": "c",
+		"threadtools.h": "c",
+		"list.h": "c"
+	},
+	"Lua.diagnostics.disable": [
+		"undefined-global"
+	]
+}
