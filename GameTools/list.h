@@ -1,7 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "luaManager.h"
 typedef struct List_t{
 	struct List_t** root;//points to a list pointer. For example, a pointer to luaFiles in luaManager.h
 	struct List_t* next;
@@ -16,3 +16,4 @@ List PushBack(List* list,void* data,size_t dataSize);
 void RemoveNode(List* list);
 void RemoveNodeNF(List* list);
 void FreeList(List* list);
+int ListCount(List list);

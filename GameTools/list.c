@@ -70,6 +70,7 @@ void _RemoveNode(List* list,int freeData){
 		(*list)->last = NULL;//get rid of last
 		if(freeData) free(tmp->data);//free the dynamic mem
 		free(tmp);
+		*(*list)->root=*list;//set root variable to first node in list
 	}else if((*list)->last!=NULL && (*list)->next!=NULL){
 		//somewhere in the list
 		List tmp = *list;
@@ -83,9 +84,13 @@ void _RemoveNode(List* list,int freeData){
 		//last in list
 		List tmp = *list;
 		(*list)->last->next=NULL;
-		*list = (*list)->last;
+		// *list = (*list)->last;
+		*list=NULL;
 		if(freeData) free(tmp->data);
 		free(tmp);
+	}else{
+		printf("ERROR!!! missing case for _RemoveNode!!!\n");
+		
 	}
 }
 void RemoveNode(List* list){
@@ -102,4 +107,14 @@ void FreeList(List* list){
 	while(*list){
 		RemoveNode(list);
 	}
+}
+
+int ListCount(List list){
+	List iter=list;
+	int i=0;
+	while(iter){
+		i++;
+		iter=iter->next;
+	}
+	return i;
 }

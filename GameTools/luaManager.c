@@ -2,13 +2,17 @@
 
 // extern void OpenLuaServerLib(lua_State* L);
 typedef void (*CustomLibrary)(lua_State* L);
-
+#ifdef _GNUC_
+	#define SRC "../"
+#endif
+#ifdef _WIN64
+	#define SRC "../../"
+#endif
 void InitLua(CustomLibrary lib){
 	state = luaL_newstate();
 	luaL_openlibs(state);
 	if(lib) lib(state);
-	// lua_pushnumber(state,0);
-	// lua_setglobal(state,"CmdQuit");//when this is 1, cmd will quit
+
 	luaFiles=NULL;
 }
 void RefreshLuaFiles(){
@@ -19,7 +23,7 @@ void RefreshLuaFiles(){
 	if((dir=opendir(".")) != NULL){//interesting
 		while((ent=readdir(dir))!=NULL){
 			if(strstr(ent->d_name,"lua")){//jank but whatever
-				int nameLen = strlen(ent->d_name)+1;
+				int nameLen = (int)strlen(ent->d_name)+1;
 				char* data=malloc(nameLen);
 				memcpy(data,ent->d_name,nameLen);
 				PushBack(&luaFiles,data,nameLen);
@@ -43,8 +47,11 @@ void RefreshCmdFile() {
 		}
 		iter = iter->next;
 	}
-	if (luaL_dofile(state, "commands.lua"))
-		printf("error: %s\n", lua_tostring(state, -1));
+	if (luaL_dofile(state, "commands.lua")){
+		if(luaL_dofile(state, SRC"commands.lua")){//maybe we are debugging, try navigating out of 'build'
+			printf("error: %s\n", lua_tostring(state, -1));
+		}
+	}
 	else {
 		char* data = malloc(14);
 		strcpy(data, "commands.lua");
@@ -98,7 +105,7 @@ void ParseCmdLine(){
 			printf("not done %d\n",(int)tmp->dataSize);
 		}
 	}
-	if (byteCount == 0) { printf("fgets got 0 bytes?\n"); return 0; }
+	if (byteCount == 0) { printf("fgets got 0 bytes?\n"); return; }
 	//have gone through the entire stream
 	//contiguize chunks into one
 	char* bigString = malloc(byteCount);

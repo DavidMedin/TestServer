@@ -8,8 +8,10 @@ TCPsocket sock;
 int cmdQuit=0;
 SDL_mutex* cmdSignal;
 
-List clientSocks;
+List clientSocks=NULL;
 SDL_mutex* sockMutex;
+
+SDLNet_SocketSet set;
 
 
 int SDLCALL Connect(void* param){
@@ -47,6 +49,7 @@ void SendToAllClients(void* data,unsigned int dataSize){
 			RemoveNode(&iter);
 		}else
 		iter=iter->next;
+		printf("list size: %d\n",ListCount(clientSocks));
 	}
 	SDL_UnlockMutex(sockMutex);
 }
@@ -76,7 +79,6 @@ int main(int argv, char** argc){
 		printf("failed to initialize SDL_net!\n");
 		return 0;
 	}
-	InitLua(OpenLuaServerLib);
 	printf("hello, my guy\n");
 
 	//create the socket list mutex
@@ -87,24 +89,7 @@ int main(int argv, char** argc){
 	if(!connectingThd)
 		printf("Couldn't create connecting thread!: %s\n",SDL_GetError());
 		//resolve IP address
-	// SDLNet_ResolveHost(&ip, NULL, 1234);
-	// sock = SDLNet_TCP_Open(&ip);
-	// if (sock == NULL) {
-	// 	printf("TCP Open Error: %s\n", SDLNet_GetError());
-	// 	return 0;
-	// }
-	// while(1){
-	// 	TCPsocket tmpSock = SDLNet_TCP_Accept(sock);
-	// 	if (tmpSock) {
-	// 		TCPsocket* allocSock = malloc(sizeof(TCPsocket));
-	// 		*allocSock = tmpSock;
-	// 		//SDL_LockMutex(sockMutex);
-	// 		PushBack(&clientSocks, allocSock, sizeof(TCPsocket));
-	// 		//SDL_UnlockMutex(sockMutex);
-	// 		printf("Connected!\n");
-	// 		break;
-	// 	}
-	// }
+
 	while(!cmdQuit) ParseCmdLine();
 	int stat;
 	SDL_WaitThread(connectingThd,&stat);
