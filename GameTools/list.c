@@ -1,8 +1,8 @@
 #include "list.h"
 
-//0 is before list, increments from there
+0 is before list, increments from there
 Link AddNode(List* list,int index,void* data,size_t dataSize){
-	//check if out of range
+	check if out of range
 	if(index>list->count || index<0){
 		printf("index %d out of range!\n",index);
 		return NULL;
@@ -24,11 +24,11 @@ Link AddNode(List* list,int index,void* data,size_t dataSize){
 	}else//somewhere in the list
 	{
 		Link iter = list->start;
-		//iterate to find target to move behind (0 will move to behind this list)
+		iterate to find target to move behind (0 will move to behind this list)
 		for(int i = 0;i < index;i++){
 			iter=iter->next;
 		}
-		//use iter to move behind
+		use iter to move behind
 		if(iter==list->start)
 			list->start=newLink;
 		Link oldBehind=iter->last;
@@ -42,66 +42,59 @@ Link AddNode(List* list,int index,void* data,size_t dataSize){
 	list->count++;
 	return newLink;
 }
-// List PushBack(List* list,void* data,size_t dataSize){
-// 	int index = 0;
-// 	List iter=*list;
-// 	while(iter){
-// 		iter=iter->next;
-// 		index++;
-// 	}
-// 	return AddNode(list,index,data,dataSize);
-// }
-// void _RemoveNode(List* list,int freeData){
-// 	if((*list)->last==NULL && (*list)->next==NULL){
-// 		//just destroy
-// 		List* root = (*list)->root;
-// 		if(freeData) free((*list)->data);
-// 		free(*list);
-// 		*root=0;
-// 		*list=0;
-// 	}else
-// 	if((*list)->last==NULL){
-// 		//first in List
-// 		List tmp = *list;//storing for freeing later
-// 		*list=(*list)->next;//make list equal to the next list node
-// 		(*list)->last = NULL;//get rid of last
-// 		if(freeData) free(tmp->data);//free the dynamic mem
-// 		free(tmp);
-// 		*(*list)->root=*list;//set root variable to first node in list
-// 	}else if((*list)->last!=NULL && (*list)->next!=NULL){
-// 		//somewhere in the list
-// 		List tmp = *list;
-// 		(*list)->next->last = (*list)->last;//point front to back of this node
-// 		(*list)->last->next = (*list)->next;//point back to front of this node
-// 		*list=(*list)->next;//the next node is what list will point to now
-// 		//free tmp & data
-// 		if(freeData) free(tmp->data);
-// 		free(tmp);
-// 	}else if((*list)->next==NULL){
-// 		//last in list
-// 		List tmp = *list;
-// 		(*list)->last->next=NULL;
-// 		// *list = (*list)->last;
-// 		*list=NULL;
-// 		if(freeData) free(tmp->data);
-// 		free(tmp);
-// 	}else{
-// 		printf("ERROR!!! missing case for _RemoveNode!!!\n");
-		
-// 	}
-// }
-// void RemoveNode(List* list){
-// 	_RemoveNode(list,1);
-// }
-// //does not free data
-// void RemoveNodeNF(List* list){
-// 	_RemoveNode(list,0);
-// }
-// //removes/frees everything in list
-// //warning, this will not deallocate ANY of the data's data (but will dealocate the member "data")
-// //if you want to deallocate any of that, you'll have to create the loop yourself
-// void FreeList(List* list){
-// 	while(*list){
-// 		RemoveNode(list);
-// 	}
-// }
+Link PushBack(List* list,void* data,size_t dataSize){
+	return AddNode(list,list->count,data,dataSize);
+}
+void _RemoveNode(Link* link,int freeData){
+	if((*link)->last==NULL && (*link)->next==NULL){
+		//just destroy
+		if(freeData) free((*link)->data);
+		(*link)->root->start=NULL;
+		(*link)->root->end=NULL;
+		(*link)->root->count--;
+		free(*link);
+	}else
+	if((*link)->last==NULL){
+		//first in List
+		Link tmp = link;
+		tmp->root->start=tmp->next;
+
+		(*link)->last = NULL;//get rid of last
+		if(freeData) free(tmp->data);//free the dynamic mem
+		free(tmp);
+	}else if(link->last!=NULL && link->next!=NULL){
+		//somewhere in the list
+		List tmp = *link;
+		link->next->last = link->last;//point front to back of this node
+		link->last->next = link->next;//point back to front of this node
+		*link=link->next;//the next node is what list will point to now
+		//free tmp & data
+		if(freeData) free(tmp->data);
+		free(tmp);
+	}else if(link->next==NULL){
+		//last in list
+		List tmp = *link;
+		link->last->next=NULL;
+		// *list = (*list)->last;
+		*link=NULL;
+		if(freeData) free(tmp->data);
+		free(tmp);
+	}else{
+		printf("ERROR!!! missing case for _RemoveNode!!!\n");
+	}
+}
+void RemoveNode(List* list){
+	_RemoveNode(list,1);
+}
+//does not free data
+void RemoveNodeNF(List* list){
+	_RemoveNode(list,0);
+}
+//removes/frees everything in list
+//warning, this will not deallocate ANY of the data's data (but will dealocate the member "data")
+//if you want to deallocate any of that, you'll have to create the loop yourself
+void FreeList(List* list){
+	while(*list){
+		RemoveNode(list);
+	}
+}
