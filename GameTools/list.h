@@ -2,18 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "luaManager.h"
-typedef struct List_t{
-	struct List_t** root;//points to a list pointer. For example, a pointer to luaFiles in luaManager.h
-	struct List_t* next;
-	struct List_t* last;
+typedef struct Link_t* Link;
+typedef struct{
+	Link start;
+	Link end;
+	unsigned int count;
+}List;
+typedef struct Link_t{
+	List* root;
+	struct Link_t* next;
+	struct Link_t* last;
 	void* data;
-	size_t dataSize;//in bytes
-}*List;
+	size_t dataSize; 
+}*Link;
 
-
-List AddNode(List* list,int index,void* data,size_t dataSize);
-List PushBack(List* list,void* data,size_t dataSize);
-void RemoveNode(List* list);
-void RemoveNodeNF(List* list);
-void FreeList(List* list);
-int ListCount(List list);
+Link AddNode(List* list,int index,void* data,size_t dataSize);
+Link PushBack(List* list,void* data,size_t dataSize);
+void RemoveNode(Link* link);
+void RemoveNodeNF(Link* link);
+void FreeList(List list);
