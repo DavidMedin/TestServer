@@ -3,7 +3,7 @@ extern int cmdQuit;
 
 
 void CallString(char* bigString){
-		char* context=0;
+	char* context=0;
 	char* token=0;
 	token = strtok_safe(bigString," ",&context);
 	//token is function name
@@ -18,20 +18,20 @@ void CallString(char* bigString){
 
 	int sentenceSize=0;
 	int ongoingSent=0;
-	List sentenceFrags=0;//this stores pointers into bigString. When a sentance has been formed,
+	List sentenceFrags={0};//this stores pointers into bigString. When a sentance has been formed,
 					//these are counted up and copied into another big string with spaces to lua
-	List completeSents=0;
+	List completeSents={0};
 	while(token){
 		// printf("%s\n",token);
 		//extract string if there is one there
 		int tokLen = strlen(token);
 		// printf("first character is %c\n",*token);
 		if(*(token+tokLen-1)=='"'){//if the last character of token is "
-			if(sentenceFrags==0^*token=='"'){//word has quotes on both sides
+			if(sentenceFrags.count==0^*token=='"'){//word has quotes on both sides
 				printf("Quote syntax error: %s! skipping.\n",token);
 				//cleanup string
-				while(sentenceFrags){
-					RemoveNodeNF(&sentenceFrags);
+				ForEach(sentenceFrags){
+					RemoveElementNF(&iter);
 				}
 				sentenceSize=0;
 				ongoingSent=0;
@@ -42,11 +42,11 @@ void CallString(char* bigString){
 			PushBack(&sentenceFrags, token, tokLen);
 			char* allocArg = malloc(sentenceSize);
 			char* next=allocArg;
-			while(sentenceFrags){
-				memcpy(next,sentenceFrags->data,sentenceFrags->dataSize);
-				next+=sentenceFrags->dataSize+1;//include null/space
-				RemoveNodeNF(&sentenceFrags);
-				*(next - 1) = sentenceFrags ? ' ' : '\0';
+			ForEach(sentenceFrags){
+				memcpy(next,iter.this->data,iter.this->dataSize);
+				next+=iter.this->dataSize+1;//include null/space
+				RemoveElementNF(&iter);
+				*(next - 1) = sentenceFrags.count ? ' ' : '\0';
 			}
 			char* quoteContex;
 			char* quoteDelim = strtok_safe(allocArg,"\"",&quoteContex);
@@ -69,18 +69,18 @@ void CallString(char* bigString){
 		}
 		token = strtok_safe(NULL," ",&context);
 	}
-	if(sentenceFrags){
+	if(sentenceFrags.count){
 		printf("Quote syntax error: missing end quote in sentance \"");
-		while(sentenceFrags){
-			printf("%s ",sentenceFrags->data);
-			RemoveNodeNF(&sentenceFrags);
+		ForEach(sentenceFrags){
+			printf("%s ",iter.this->data);
+			RemoveElementNF(&iter);
 		}
 		printf("\"\n");
 	}
 	if(lua_pcall(state,argumentCount,0,0)!=LUA_OK)
 		printf("oh no, lua threw an error! : %s\n",lua_tostring(state,-1));
-	while(completeSents){
-		RemoveNode(&completeSents);//IN THEORY this will free all sentences
+	ForEach(completeSents){
+		RemoveElement(&iter);//IN THEORY this will free all sentences
 	}
 }
 

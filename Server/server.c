@@ -8,7 +8,7 @@ TCPsocket sock;
 int cmdQuit=0;
 SDL_mutex* cmdSignal;
 
-List clientSocks=NULL;
+List clientSocks={0};
 SDL_mutex* sockMutex;
 
 SDLNet_SocketSet set;
@@ -39,30 +39,26 @@ int SDLCALL Connect(void* param){
 
 void SendToAllClients(void* data,unsigned int dataSize){
 	SDL_LockMutex(sockMutex);
-	List iter = clientSocks;
-	while(iter){
-		int sentN = SDLNet_TCP_Send(*(TCPsocket*)iter->data,data,dataSize);
+	ForEach(clientSocks){
+		int sentN = SDLNet_TCP_Send(*(TCPsocket*)iter.this->data,data,dataSize);
 		if(sentN != dataSize){
 			// printf("failed to send all data (%d of %u sent): %s message %s\n",sentN,dataSize,SDLNet_GetError(),(char*)data);
 			printf("Disconnecting\n");
-			SDLNet_TCP_Close(*(TCPsocket*)iter->data);
-			RemoveNode(&iter);
-		}else
-		iter=iter->next;
-		printf("list size: %d\n",ListCount(clientSocks));
+			SDLNet_TCP_Close(*(TCPsocket*)iter.this->data);
+			RemoveElement(&iter);
+		}
+		printf("list size: %d\n",clientSocks.count);
 	}
 	SDL_UnlockMutex(sockMutex);
 }
 void KillConnection(){
 	printf("sending kill messege\n");
 	int msg = Quit;
-	List iter = clientSocks;
-	while(iter){
-		int sentN = SDLNet_TCP_Send(*((TCPsocket*)iter->data), &msg, sizeof(msg));
+	ForEach(clientSocks){
+		int sentN = SDLNet_TCP_Send(*((TCPsocket*)iter.this->data), &msg, sizeof(msg));
 		if(sentN != sizeof(msg)){
 			printf("failed to send all data (%d of %d sent): %s\n",sentN,(int)sizeof(msg),SDLNet_GetError());
 		}
-		iter=iter->next;
 	}
 }
 
@@ -79,6 +75,7 @@ int main(int argv, char** argc){
 		printf("failed to initialize SDL_net!\n");
 		return 0;
 	}
+	InitLua(OpenLuaServerLib);//wasn't here for some reason
 	printf("hello, my guy\n");
 
 	//create the socket list mutex
@@ -97,9 +94,9 @@ int main(int argv, char** argc){
 	KillConnection();
 
 	//disconnect
-	while(clientSocks){
-		SDLNet_TCP_Close(*(TCPsocket*)clientSocks->data);
-		RemoveNode(&clientSocks);
+	ForEach(clientSocks){
+		SDLNet_TCP_Close(*(TCPsocket*)iter.this->data);
+		RemoveElement(&iter);
 		printf("Disconnected!\n");
 	}
 

@@ -7,7 +7,7 @@ set(GAMETOOLS_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../GameTools)
 file(GLOB GAMETOOLS_SRC ${GAMETOOLS_ROOT}/*.c)
 file(GLOB CLIENT_SRC *.c)
 # add_executable(${PROJECT_NAME} ${CLIENT_SRC} ${GAMETOOLS_SRC})
-add_executable(${PROJECT_NAME} client.c ${GAMETOOLS_ROOT}/list.c)
+add_executable(${PROJECT_NAME} ${CLIENT_SRC} ${GAMETOOLS_SRC})
 
 find_package(SDL2 CONFIG REQUIRED)
 find_package(sdl2-net CONFIG REQUIRED)

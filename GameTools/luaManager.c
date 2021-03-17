@@ -13,7 +13,9 @@ void InitLua(CustomLibrary lib){
 	luaL_openlibs(state);
 	if(lib) lib(state);
 
-	luaFiles=NULL;
+	luaFiles.count=0;
+	luaFiles.end=NULL;
+	luaFiles.start=NULL;
 }
 void RefreshLuaFiles(){
 	//remove all files
@@ -39,13 +41,11 @@ void RefreshLuaFiles(){
 		printf("Couldn't open directory \".\"\n");
 }
 void RefreshCmdFile() {
-	List iter = luaFiles;
-	while (iter!=NULL) {
-		if (strcmp(iter->data, "commands.lua") == 0) {
-			RemoveNode(&iter);
+	ForEach(luaFiles) {
+		if (strcmp(iter.this->data, "commands.lua") == 0) {
+			RemoveElement(&iter);
 			break;//found the file.
 		}
-		iter = iter->next;
 	}
 	if (luaL_dofile(state, "commands.lua")){
 		if(luaL_dofile(state, SRC"commands.lua")){//maybe we are debugging, try navigating out of 'build'
@@ -59,18 +59,18 @@ void RefreshCmdFile() {
 	}
 }
 void ExecuteLuaFile(char* fileName){//ExecuteLuaFile("dir");
-	List iter=luaFiles;
-	do{
+	// List iter=luaFiles;
+	ForEach(luaFiles){
 		char buff[256]={0};//assuming this is zeroed by default
 		memcpy(buff,fileName,strlen(fileName));//strleng doesn't include \0
 		strcat(buff,".lua");
-		if(strcmp(iter->data,buff)==0){
+		if(strcmp(iter.this->data,buff)==0){
 			if(luaL_dofile(state,buff)){
 				printf("error: %s\n",lua_tostring(state,-1));
 				lua_close(state);
 			}
 		}
-	}while(iter=iter->next);
+	}
 }
 void CleanupLua(){
 	FreeList(&luaFiles);
@@ -82,7 +82,7 @@ void CleanupLua(){
 
 void ParseCmdLine(){
 	//get text input as commands
-	List chunks=0;
+	List chunks={0};
 	unsigned int byteCount=0;
 	while(1){
 		char* buff = malloc(256);
@@ -96,12 +96,12 @@ void ParseCmdLine(){
 		}
 		else if(rezLen!=255){
 			byteCount += (unsigned int)rezLen+1;//include the \0
-			List tmp = PushBack(&chunks,buff,rezLen+1);//include the \0
+			Link tmp = PushBack(&chunks,buff,rezLen+1);//include the \0
 			break;
 		}
 		else{
 			byteCount += 255;//excluding /0
-			List tmp = PushBack(&chunks,buff,256);
+			Link tmp = PushBack(&chunks,buff,256);
 			printf("not done %d\n",(int)tmp->dataSize);
 		}
 	}
@@ -110,12 +110,10 @@ void ParseCmdLine(){
 	//contiguize chunks into one
 	char* bigString = malloc(byteCount);
 	int start=0;
-	List iter=chunks;
-	do{
-		memcpy(bigString+start,iter->data,iter->dataSize-1);
-		start+=(int)iter->dataSize-1;//remove the \0
-		iter=iter->next;
-	}while(iter!=NULL);
+	ForEach(chunks){
+		memcpy(bigString+start,iter.this->data,iter.this->dataSize-1);
+		start+=(int)iter.this->dataSize-1;//remove the \0
+	}
 	*(bigString+byteCount-1)=(char)0;//add the null character to the end
 	*(bigString+byteCount-2)=(char)0;//get rid of the \n
 	FreeList(&chunks);
