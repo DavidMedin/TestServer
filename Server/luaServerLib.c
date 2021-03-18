@@ -94,7 +94,7 @@ static int ServerSendText(lua_State* L){
 		printf("ServerSendText expected a string!\n");
 		return 0;
 	}
-	char* msg = lua_tostring(L,1);
+	char* msg = (char*)lua_tostring(L,1);
 	unsigned int msgLen = (unsigned int)strlen((const char*)msg)+1;
 	void* data = malloc(msgLen+sizeof(MessageType)+sizeof(unsigned int));
 	*((int*)data)=DisplayText;//write at the beginning
@@ -109,7 +109,7 @@ static int ServerReplyText(lua_State* L){
 		printf("ServerReplyText Expected a string\n");
 		return 0;
 	}
-	char* msg = lua_tostring(L,1);
+	char* msg = (char*)lua_tostring(L,1);
 	unsigned int msgLen = (unsigned int)strlen((const char*)msg)+1;
 	void* packet = CreateStringPacket(DisplayText,msg,&msgLen);
 	ReplyToClient(packet,msgLen);

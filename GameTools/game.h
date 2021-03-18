@@ -1,6 +1,5 @@
 #pragma once
-#include <string.h>
-
+#define _CRT_SECURE_NO_WARNINGS//linux doesn't use it, I won't
 typedef enum{
 	Quit,
 	DisplayText

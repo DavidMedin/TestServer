@@ -2,7 +2,7 @@
 
 // extern void OpenLuaServerLib(lua_State* L);
 typedef void (*CustomLibrary)(lua_State* L);
-#ifdef _GNUC_
+#ifdef __GNUC__
 	#define SRC "../"
 #endif
 #ifdef _WIN64

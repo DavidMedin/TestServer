@@ -3,6 +3,7 @@ extern int cmdQuit;
 void SendData(void* data,unsigned int size);
 static int ClientQuit(lua_State* L){
 	cmdQuit=1;
+	return 0;
 }
 static int SendText(lua_State* L){
 	//one argument, the string message
@@ -10,7 +11,7 @@ static int SendText(lua_State* L){
 		printf("ServerSendText expected a string!\n");
 		return 0;
 	}
-	char* msg = lua_tostring(L,1);
+	char* msg = (char*)lua_tostring(L,1);
 	unsigned int msgLen = (unsigned int)strlen(msg)+1;
 	void* data = malloc(msgLen+sizeof(MessageType)+sizeof(unsigned int));
 	*((int*)data)=DisplayText;//write at the beginning
