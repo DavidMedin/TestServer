@@ -24,6 +24,7 @@ typedef struct{
 }Iter;
 #define For_Each(list) for(Iter iter=MakeIter(&list);Inc(&iter);)
 #define Iter_Data iter.this->data
+#define Iter_DataVal(type) *(type*)iter.this->data
 Link AddNode(List* list,int index,void* data,size_t dataSize);
 Link AddIter(List* list,Iter* iter,void* data,size_t dataSize);//not done
 Link PushBack(List* list,void* data,size_t dataSize);

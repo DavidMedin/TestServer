@@ -40,6 +40,7 @@ int SDLCALL Recieve(void* param){
 			int gotN=SDLNet_TCP_Recv(sock,&msgType,sizeof(MessageType));
 			if(gotN==sizeof(MessageType) && msgType==Quit){
 				printf("killing\n");
+				cmdQuit=1;
 				break;
 			}else if(gotN != sizeof(MessageType)){
 				printf("error! %s\n",SDLNet_GetError());
@@ -57,6 +58,7 @@ int SDLCALL Recieve(void* param){
 			gotN=SDLNet_TCP_Recv(sock,msg,msgSize);
 			if(gotN!=msgSize){
 				printf("error: %s\n",SDLNet_GetError());
+				free(msg);
 				break;
 			}else
 			switch(msgType){
@@ -65,12 +67,19 @@ int SDLCALL Recieve(void* param){
 				}
 				default: printf("message type %d is not handled by the client yet! Get to work!\n",*(int*)msg);
 			}
+			free(msg);
 		}
 	}
 	cmdQuit=1;
 	return 0;
 }
-
+void SendData(void* data,unsigned int size){
+	int sent = SDLNet_TCP_Send(sock,data,size);
+	if(sent!=size){
+		printf("failed to send all data: %s\n",SDLNet_GetError());
+		cmdQuit=1;
+	}
+}
 int main(int argv,char** argc){
 	// List data={0};6	
 	// int values[]={1234,234,346,61,3};
