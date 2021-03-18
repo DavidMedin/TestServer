@@ -15,8 +15,6 @@ function SendStuff(...)
 	end
 end
 
-function DingDongDip()
-	SendText("Ding Dong")
-	SendText("*server* has left the chat")
-	ServerQuit()
+function Reply(msg)
+	ServerReplyText(msg)
 end

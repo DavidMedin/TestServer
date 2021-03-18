@@ -1,4 +1,6 @@
 #pragma once
+#include <string.h>
+
 typedef enum{
 	Quit,
 	DisplayText
@@ -11,3 +13,6 @@ typedef enum{
 	bla bla your data here
 }
 */
+
+//WARNING: allocates new data, you must clean yourself
+void* CreateStringPacket(MessageType msg,char* str,unsigned int* leng);

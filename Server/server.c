@@ -43,6 +43,12 @@ void Connect(){
 		printf("failed to check ready-ness of socket: %s\n",SDLNet_GetError());
 	}
 }
+TCPsocket* lastRecieved=NULL;
+void ReplyToClient(void* data,unsigned int dataSize){
+	if(!SendToClient(*lastRecieved,data,dataSize))
+		printf("failed to reply: %s\n",SDLNet_GetError());
+	lastRecieved=NULL;
+}
 void Recieve(){
 	if(clientSocks.count==0) return;
 	int used = SDLNet_CheckSockets(sockSet,1000);
@@ -57,9 +63,7 @@ void Recieve(){
 				TCPsocket clientSock = Iter_DataVal(TCPsocket);
 				int msgType;
 				int gotN=SDLNet_TCP_Recv(clientSock,&msgType,sizeof(MessageType));
-				if(gotN==sizeof(MessageType) && msgType==Quit){
-					printf("ha ha, very funny\n");
-				}else if(gotN != sizeof(MessageType)){
+				if(gotN != sizeof(MessageType)){
 					//remove from sock set
 					int used=SDLNet_TCP_DelSocket(sockSet,Iter_DataVal(TCPsocket)); 
 					if(used==-1){
@@ -70,6 +74,14 @@ void Recieve(){
 						RemoveElement(&iter);
 					}
 					break;
+				}
+				lastRecieved=Iter_Data;
+				if(gotN==sizeof(MessageType) && msgType==Quit){
+					printf("ha ha, very funny\n");
+					unsigned int leng = 17;
+					void* packet = CreateStringPacket(DisplayText,"Ha ha very funny",&leng);
+					ReplyToClient(packet,leng);
+					free(packet);
 				}
 				//get message size
 				unsigned int msgSize;
@@ -96,11 +108,17 @@ void Recieve(){
 		}
 	}
 }
+int SendToClient(TCPsocket sock,void* data,unsigned int dataSize){
+	int sentN = SDLNet_TCP_Send(sock,data,dataSize);
+	if(sentN != dataSize){
+		return 0;
+	}
+	return 1;
+}
 void SendToAllClients(void* data,unsigned int dataSize){
 	SDL_LockMutex(sockMutex);
 	For_Each(clientSocks){
-		int sentN = SDLNet_TCP_Send(*(TCPsocket*)Iter_Data,data,dataSize);
-		if(sentN != dataSize){
+		if(!SendToClient(Iter_DataVal(TCPsocket),data,dataSize)){
 			//remove from sock set
 			int used=SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data); 
 			if(used==-1){
@@ -114,6 +132,7 @@ void SendToAllClients(void* data,unsigned int dataSize){
 	}
 	SDL_UnlockMutex(sockMutex);
 }
+
 void KillConnection(){
 	printf("sending kill messege\n");
 	int msg = Quit;

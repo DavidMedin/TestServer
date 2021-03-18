@@ -105,6 +105,18 @@ static int ServerSendText(lua_State* L){
 	free(data);
 	return 0;
 }
+static int ServerReplyText(lua_State* L){
+	if(!lua_isstring(L,1)){
+		printf("ServerReplyText Expected a string\n");
+		return 0;
+	}
+	char* msg = lua_tostring(L,1);
+	unsigned int msgLen = (unsigned int)strlen(msg)+1;
+	void* packet = CreateStringPacket(DisplayText,msg,&msgLen);
+	ReplyToClient(packet,msgLen);
+	free(packet);
+	return 0;
+}
 static const struct luaL_Reg serverLib[]={
 	{"ServerQuit",ServerQuit},
 	{NULL,NULL}
@@ -114,4 +126,5 @@ void OpenLuaServerLib(lua_State* L){
 	// luaL_setfuncs(L,serverLib,0);
 	lua_register(L,"ServerQuit",ServerQuit);
 	lua_register(L,"ServerSendText",ServerSendText);
+	lua_register(L,"ServerReplyText",ServerReplyText);
 }

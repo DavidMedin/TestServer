@@ -19,3 +19,4 @@
 
 void KillConnection();
 void SendToAllClients(void* data,unsigned int dataSize);
+void ReplyToClient(void* data,unsigned int dataSize);
