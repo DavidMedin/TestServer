@@ -30,7 +30,7 @@ void CallString(char* bigString){
 			if(sentenceFrags.count==0^*token=='"'){//word has quotes on both sides
 				printf("Quote syntax error: %s! skipping.\n",token);
 				//cleanup string
-				ForEach(sentenceFrags){
+				For_Each(sentenceFrags){
 					RemoveElementNF(&iter);
 				}
 				sentenceSize=0;
@@ -42,7 +42,7 @@ void CallString(char* bigString){
 			PushBack(&sentenceFrags, token, tokLen);
 			char* allocArg = malloc(sentenceSize);
 			char* next=allocArg;
-			ForEach(sentenceFrags){
+			For_Each(sentenceFrags){
 				memcpy(next,iter.this->data,iter.this->dataSize);
 				next+=iter.this->dataSize+1;//include null/space
 				RemoveElementNF(&iter);
@@ -71,7 +71,7 @@ void CallString(char* bigString){
 	}
 	if(sentenceFrags.count){
 		printf("Quote syntax error: missing end quote in sentance \"");
-		ForEach(sentenceFrags){
+		For_Each(sentenceFrags){
 			printf("%s ",iter.this->data);
 			RemoveElementNF(&iter);
 		}
@@ -79,7 +79,7 @@ void CallString(char* bigString){
 	}
 	if(lua_pcall(state,argumentCount,0,0)!=LUA_OK)
 		printf("oh no, lua threw an error! : %s\n",lua_tostring(state,-1));
-	ForEach(completeSents){
+	For_Each(completeSents){
 		RemoveElement(&iter);//IN THEORY this will free all sentences
 	}
 }

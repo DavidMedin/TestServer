@@ -1,0 +1,3 @@
+function Quit()
+	ClientQuit()
+end

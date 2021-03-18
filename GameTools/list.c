@@ -94,7 +94,7 @@ int Inc(Iter* iter){
 //warning, this will not deallocate ANY of the data's data (but will dealocate the member "data")
 //if you want to deallocate any of that, you'll have to create the loop yourself
 void FreeList(List* list){
-	ForEach(*list){
+	For_Each(*list){
 		RemoveElement(&iter);
 	}
 }

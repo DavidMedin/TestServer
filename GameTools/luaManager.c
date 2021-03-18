@@ -41,7 +41,7 @@ void RefreshLuaFiles(){
 		printf("Couldn't open directory \".\"\n");
 }
 void RefreshCmdFile() {
-	ForEach(luaFiles) {
+	For_Each(luaFiles) {
 		if (strcmp(iter.this->data, "commands.lua") == 0) {
 			RemoveElement(&iter);
 			break;//found the file.
@@ -60,7 +60,7 @@ void RefreshCmdFile() {
 }
 void ExecuteLuaFile(char* fileName){//ExecuteLuaFile("dir");
 	// List iter=luaFiles;
-	ForEach(luaFiles){
+	For_Each(luaFiles){
 		char buff[256]={0};//assuming this is zeroed by default
 		memcpy(buff,fileName,strlen(fileName));//strleng doesn't include \0
 		strcat(buff,".lua");
@@ -110,7 +110,7 @@ void ParseCmdLine(){
 	//contiguize chunks into one
 	char* bigString = malloc(byteCount);
 	int start=0;
-	ForEach(chunks){
+	For_Each(chunks){
 		memcpy(bigString+start,iter.this->data,iter.this->dataSize-1);
 		start+=(int)iter.this->dataSize-1;//remove the \0
 	}
