@@ -15,6 +15,7 @@ SDLNet_SocketSet sockSet;
 
 int SDLCALL ThdParseCmd(void* param){
 	while(!cmdQuit) ParseCmdLine();
+	return 0;
 }
 void Connect(){
 	TCPsocket tmpSock;
@@ -43,6 +44,13 @@ void Connect(){
 		printf("failed to check ready-ness of socket: %s\n",SDLNet_GetError());
 	}
 }
+int SendToClient(TCPsocket sock,void* data,unsigned int dataSize){
+	int sentN = SDLNet_TCP_Send(sock,data,dataSize);
+	if(sentN != dataSize){
+		return 0;
+	}
+	return 1;
+}
 TCPsocket* lastRecieved=NULL;
 void ReplyToClient(void* data,unsigned int dataSize){
 	if(!SendToClient(*lastRecieved,data,dataSize))
@@ -67,7 +75,8 @@ void Recieve(){
 					//remove from sock set
 					int used=SDLNet_TCP_DelSocket(sockSet,Iter_DataVal(TCPsocket)); 
 					if(used==-1){
-						printf("failed to delete sock from drawer!: %s\n",SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data));
+						printf("failed to delete sock from drawer!: %s\n",SDLNet_GetError());
+						SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data);
 					}else{
 						printf("Disconnecting: %s\n",SDLNet_GetError());
 						SDLNet_TCP_Close(Iter_DataVal(TCPsocket));
@@ -108,13 +117,7 @@ void Recieve(){
 		}
 	}
 }
-int SendToClient(TCPsocket sock,void* data,unsigned int dataSize){
-	int sentN = SDLNet_TCP_Send(sock,data,dataSize);
-	if(sentN != dataSize){
-		return 0;
-	}
-	return 1;
-}
+
 void SendToAllClients(void* data,unsigned int dataSize){
 	SDL_LockMutex(sockMutex);
 	For_Each(clientSocks){
@@ -122,7 +125,8 @@ void SendToAllClients(void* data,unsigned int dataSize){
 			//remove from sock set
 			int used=SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data); 
 			if(used==-1){
-				printf("failed to delete sock from drawer!: %s\n",SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data));
+				printf("failed to delete sock from drawer!: %s\n",SDLNet_GetError());
+				SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data);
 			}else{
 				printf("Disconnecting\n");
 				SDLNet_TCP_Close(*(TCPsocket*)iter.this->data);
@@ -163,11 +167,11 @@ int main(int argv, char** argc){
 	//allocate socket set
 	sockSet=SDLNet_AllocSocketSet(16);
 	if(!sockSet){
-		printf("Couldn't allocate socket set!: %d\n",SDLNet_GetError());
+		printf("Couldn't allocate socket set!: %s\n",SDLNet_GetError());
 	}
 	servSockSet=SDLNet_AllocSocketSet(1);
 	if(!servSockSet){
-		printf("Couldn't allocate server socket set!: %d\n",SDLNet_GetError());
+		printf("Couldn't allocate server socket set!: %s\n",SDLNet_GetError());
 	}
 	//resolve IP address for server sock
 	SDLNet_ResolveHost(&ip,NULL,1234);
@@ -176,7 +180,7 @@ int main(int argv, char** argc){
 		printf("TCP Open Error: %s\n", SDLNet_GetError());
 		return 0;
 	}
-	SDLNet_AddSocket(servSockSet,sock);
+	SDLNet_TCP_AddSocket(servSockSet,sock);
 
 
 	//create the socket list mutex
@@ -201,7 +205,8 @@ int main(int argv, char** argc){
 	For_Each(clientSocks){
 		int used=SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data); 
 		if(used==-1){
-			printf("failed to delete sock from drawer!: %s\n",SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data));
+			printf("failed to delete sock from drawer!: %s\n",SDLNet_GetError());
+			SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data);
 		}else{
 			SDLNet_TCP_Close(*(TCPsocket*)iter.this->data);
 			RemoveElement(&iter);
