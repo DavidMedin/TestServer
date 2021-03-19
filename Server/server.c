@@ -8,10 +8,11 @@ TCPsocket sock;SDLNet_SocketSet servSockSet;
 int cmdQuit=0;
 SDL_mutex* cmdSignal;
 
-List clientSocks={0};
+// List clientSocks={0};
+// SDLNet_SocketSet sockSet;
+List drawers={0};
 SDL_mutex* sockMutex;
 
-SDLNet_SocketSet sockSet;
 
 int SDLCALL ThdParseCmd(void* param){
 	while(!cmdQuit) ParseCmdLine();
@@ -27,18 +28,17 @@ void Connect(){
 		tmpSock = SDLNet_TCP_Accept(sock);
 		if(tmpSock){
 			//add to socketSet
-			int used=SDLNet_TCP_AddSocket(sockSet,tmpSock);
-			printf("used socks: %d\n",used);
-			if(used==-1){
-				printf("Failed to add socket to socket set!: %s\n",SDLNet_GetError());
-			}else{
-				TCPsocket* allocSock = malloc(sizeof(TCPsocket));
-				*allocSock = tmpSock;
-				SDL_LockMutex(sockMutex);
-				PushBack(&clientSocks,allocSock,sizeof(TCPsocket));
-				SDL_UnlockMutex(sockMutex);
-				printf("Connected!\n");
+			// int used=SDLNet_TCP_AddSocket(sockSet,tmpSock);
+			SDL_LockMutex(sockMutex);
+			For_Each(drawers,iter){
+				if(((Drawer*)Iter_Data)->count<DRAWERSIZE){
+					//this drawer isn't full
+					DepositSock((Drawer*)Iter_Data,(Sock){tmpSock,"hi"});
+				}
 			}
+			// PushBack(&clientSocks,allocSock,sizeof(TCPsocket));
+			SDL_UnlockMutex(sockMutex);
+			printf("Connected!\n");
 		}
 	}else if(ready==-1){
 		printf("failed to check ready-ness of socket: %s\n",SDLNet_GetError());
@@ -59,7 +59,7 @@ void Recieve(){
 		return;
 	}else if(used>0){
 		//loop for ready
-		For_Each(clientSocks){
+		For_Each(clientSocks,iter){
 			if(SDLNet_SocketReady(Iter_DataVal(TCPsocket))>0){
 				//get message type
 				TCPsocket clientSock = Iter_DataVal(TCPsocket);
@@ -114,7 +114,7 @@ void Recieve(){
 
 void SendToAllClients(void* data,unsigned int dataSize){
 	SDL_LockMutex(sockMutex);
-	For_Each(clientSocks){
+	For_Each(clientSocks,iter){
 		if(!SendToSocket(Iter_DataVal(TCPsocket),data,dataSize)){
 			//remove from sock set
 			int used=SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data); 
@@ -134,7 +134,7 @@ void SendToAllClients(void* data,unsigned int dataSize){
 void KillConnection(){
 	printf("sending kill messege\n");
 	int msg = Quit;
-	For_Each(clientSocks){
+	For_Each(clientSocks,iter){
 		int sentN = SDLNet_TCP_Send(*((TCPsocket*)iter.this->data), &msg, sizeof(msg));
 		if(sentN != sizeof(msg)){
 			printf("failed to send all data (%d of %d sent): %s\n",sentN,(int)sizeof(msg),SDLNet_GetError());
@@ -158,11 +158,11 @@ int main(int argv, char** argc){
 	InitLua(OpenLuaServerLib);//wasn't here for some reason
 	printf("hello, my guy\n");
 	
+	// sockSet=SDLNet_AllocSocketSet(16);
+	// if(!sockSet){
+	// 	printf("Couldn't allocate socket set!: %s\n",SDLNet_GetError());
+	// }
 	//allocate socket set
-	sockSet=SDLNet_AllocSocketSet(16);
-	if(!sockSet){
-		printf("Couldn't allocate socket set!: %s\n",SDLNet_GetError());
-	}
 	servSockSet=SDLNet_AllocSocketSet(1);
 	if(!servSockSet){
 		printf("Couldn't allocate server socket set!: %s\n",SDLNet_GetError());
@@ -176,6 +176,8 @@ int main(int argv, char** argc){
 	}
 	SDLNet_TCP_AddSocket(servSockSet,sock);
 
+	//start drawer list
+	PushBack(&drawers,MakeDrawer(),sizeof(Drawer));
 
 	//create the socket list mutex
 	sockMutex = SDL_CreateMutex();
@@ -196,7 +198,7 @@ int main(int argv, char** argc){
 	KillConnection();
 	
 	//disconnect
-	For_Each(clientSocks){
+	For_Each(clientSocks,iter){
 		int used=SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data); 
 		if(used==-1){
 			printf("failed to delete sock from drawer!: %s\n",SDLNet_GetError());

@@ -9,7 +9,10 @@ typedef struct{
 
 typedef struct{
     Sock socks[DRAWERSIZE];
+    char bits[DRAWERSIZE/sizeof(char)];
     SDLNet_SocketSet set;
     int count;
-    
 }Drawer;
+
+Drawer* MakeDrawer();
+void DepositSock(Drawer* drawer,Sock sock);

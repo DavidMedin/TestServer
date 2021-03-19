@@ -10,6 +10,7 @@
 #include "list.h"
 #include "luaManager.h"
 #include "luaServerLib.h"
+#include "socks.h"
 // #define strtok_safe
 #ifdef _WIN64
 #define strtok_safe strtok_s
