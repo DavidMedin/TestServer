@@ -14,3 +14,11 @@ void* CreateStringPacket(MessageType msg,char* str,unsigned int* leng){
 	*leng = packSize;
 	return data;
 }
+
+int SendToSocket(TCPsocket sock,void* data,unsigned int dataSize){
+	int sentN = SDLNet_TCP_Send(sock,data,dataSize);
+	if(sentN != dataSize){
+		return 0;
+	}
+	return 1;
+}

@@ -1,6 +1,5 @@
 #include "luaClientLib.h"
 extern int cmdQuit;
-void SendData(void* data,unsigned int size);
 static int ClientQuit(lua_State* L){
 	cmdQuit=1;
 	return 0;
@@ -17,7 +16,7 @@ static int SendText(lua_State* L){
 	*((int*)data)=DisplayText;//write at the beginning
 	*((int*)data+1)=msgLen;//write after MessageType
 	memcpy((char*)data+sizeof(MessageType)+sizeof(unsigned int),msg,msgLen);
-	SendData(data,msgLen+sizeof(MessageType)+sizeof(unsigned int));
+	SendToSocket(sock,data,msgLen+sizeof(MessageType)+sizeof(unsigned int));
 	free(data);
 	return 0;
 }

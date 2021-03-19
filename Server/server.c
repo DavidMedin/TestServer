@@ -44,16 +44,10 @@ void Connect(){
 		printf("failed to check ready-ness of socket: %s\n",SDLNet_GetError());
 	}
 }
-int SendToClient(TCPsocket sock,void* data,unsigned int dataSize){
-	int sentN = SDLNet_TCP_Send(sock,data,dataSize);
-	if(sentN != dataSize){
-		return 0;
-	}
-	return 1;
-}
+
 TCPsocket* lastRecieved=NULL;
 void ReplyToClient(void* data,unsigned int dataSize){
-	if(!SendToClient(*lastRecieved,data,dataSize))
+	if(!SendToSocket(*lastRecieved,data,dataSize))
 		printf("failed to reply: %s\n",SDLNet_GetError());
 	lastRecieved=NULL;
 }
@@ -121,7 +115,7 @@ void Recieve(){
 void SendToAllClients(void* data,unsigned int dataSize){
 	SDL_LockMutex(sockMutex);
 	For_Each(clientSocks){
-		if(!SendToClient(Iter_DataVal(TCPsocket),data,dataSize)){
+		if(!SendToSocket(Iter_DataVal(TCPsocket),data,dataSize)){
 			//remove from sock set
 			int used=SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data); 
 			if(used==-1){

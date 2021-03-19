@@ -1,5 +1,6 @@
 #pragma once
-#define _CRT_SECURE_NO_WARNINGS//linux doesn't use it, I won't
+#include <SDL2/SDL_net.h>
+#define _CRT_SECURE_NO_WARNINGS 1//linux doesn't use it, I won't
 typedef enum{
 	Quit,
 	DisplayText
@@ -15,3 +16,5 @@ typedef enum{
 
 //WARNING: allocates new data, you must clean yourself
 void* CreateStringPacket(MessageType msg,char* str,unsigned int* leng);
+
+int SendToSocket(TCPsocket sock,void* data,unsigned int dataSize);

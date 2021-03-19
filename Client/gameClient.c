@@ -5,10 +5,9 @@
 #include <luaManager.h>
 #include "luaClientLib.h"
 
-#include <list.h>
-#include <game.h>
+#include "gameClient.h"
 IPaddress serverAddress;
-TCPsocket sock;
+
 SDLNet_SocketSet sockSet;
 
 SDL_Thread* recieveThred;
@@ -73,31 +72,8 @@ int SDLCALL Recieve(void* param){
 	cmdQuit=1;
 	return 0;
 }
-void SendData(void* data,unsigned int size){
-	int sent = SDLNet_TCP_Send(sock,data,size);
-	if(sent!=size){
-		printf("failed to send all data: %s\n",SDLNet_GetError());
-		cmdQuit=1;
-	}
-}
+
 int main(int argv,char** argc){
-	// List data={0};6	
-	// int values[]={1234,234,346,61,3};
-	// for(int i = 0;i < 5;i++){
-	// 	PushBack(&data,&values[i],sizeof(int));
-	// }
-	// ForEach(data){
-	// 	printf("value is %d\n",*(int*)iter.this->data);
-	// }
-	// ForEach(data){
-	// 	printf("removing element!\n");
-	// 	RemoveElementNF(&iter);
-	// }
-	// ForEach(data){
-	// 	printf("value is %d\n",*(int*)iter.this->data);
-	// }
-
-
 	{signal(SIGINT,interuptHandler);
 	#ifdef _WIN64
 	if(SDL_Init(SDL_INIT_VIDEO)<0){

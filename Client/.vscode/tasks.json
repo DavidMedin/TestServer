@@ -6,7 +6,22 @@
         {
             "label": "build",
             "type": "cmake",
-            "command": "build"
+            "command": "build",
+        },
+        {
+            "label": "New client instance",
+            "type": "process",
+            "command": "${workspaceFolder}/build/debug/client.exe",
+            "group": "test",
+            "runOptions": {"instanceLimit": 18},
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "showReuseMessage": true,
+                "clear": false
+            }
         }
     ]
 }
