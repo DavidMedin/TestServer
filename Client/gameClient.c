@@ -68,6 +68,7 @@ int SDLCALL Recieve(void* param){
 			}
 			free(msg);
 		}
+		SDL_Delay(500);
 	}
 	cmdQuit=1;
 	return 0;
@@ -113,7 +114,10 @@ int main(int argv,char** argc){
 
 
 	recieveThred = SDL_CreateThread(Recieve,"Recieve",NULL);
-	while(!cmdQuit) ParseCmdLine();
+	while(!cmdQuit) {
+		ParseCmdLine();
+		SDL_Delay(500);
+	}
 	int status;
 	SDL_WaitThread(recieveThred,&status);
 	SDLNet_TCP_DelSocket(sockSet,sock);

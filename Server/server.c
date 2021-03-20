@@ -4,12 +4,9 @@
 IPaddress ip;
 TCPsocket sock;SDLNet_SocketSet servSockSet;
 
-// TCPsocket clientSock;
 int cmdQuit=0;
 SDL_mutex* cmdSignal;
 
-// List clientSocks={0};
-// SDLNet_SocketSet sockSet;
 List drawers={0};
 SDL_mutex* sockMutex;
 
@@ -30,11 +27,19 @@ void Connect(){
 			//add to socketSet
 			// int used=SDLNet_TCP_AddSocket(sockSet,tmpSock);
 			SDL_LockMutex(sockMutex);
+			int found=0;
 			For_Each(drawers,iter){
-				if(((Drawer*)Iter_Data)->count<DRAWERSIZE){
+				if(Iter_Val(iter,Drawer)->count<DRAWERSIZE){
 					//this drawer isn't full
-					DepositSock((Drawer*)Iter_Data,(Sock){tmpSock,"hi"});
+					DepositSock(Iter_Val(iter,Drawer),(Sock){tmpSock,"hi"});
+					found=1;
 				}
+			}
+			if(!found){
+				//create drawer
+				Drawer* draw = MakeDrawer();
+				PushBack(&drawers,draw,sizeof(Drawer));
+				DepositSock(draw,(Sock){tmpSock,"hi"});
 			}
 			// PushBack(&clientSocks,allocSock,sizeof(TCPsocket));
 			SDL_UnlockMutex(sockMutex);
@@ -52,80 +57,78 @@ void ReplyToClient(void* data,unsigned int dataSize){
 	lastRecieved=NULL;
 }
 void Recieve(){
-	if(clientSocks.count==0) return;
-	int used = SDLNet_CheckSockets(sockSet,1000);
-	if(used==-1){
-		printf("failed to check sockets for recieving: %s\n",SDLNet_GetError());
-		return;
-	}else if(used>0){
-		//loop for ready
-		For_Each(clientSocks,iter){
-			if(SDLNet_SocketReady(Iter_DataVal(TCPsocket))>0){
-				//get message type
-				TCPsocket clientSock = Iter_DataVal(TCPsocket);
-				int msgType;
-				int gotN=SDLNet_TCP_Recv(clientSock,&msgType,sizeof(MessageType));
-				if(gotN != sizeof(MessageType)){
-					//remove from sock set
-					int used=SDLNet_TCP_DelSocket(sockSet,Iter_DataVal(TCPsocket)); 
-					if(used==-1){
-						printf("failed to delete sock from drawer!: %s\n",SDLNet_GetError());
-						SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data);
-					}else{
-						printf("Disconnecting: %s\n",SDLNet_GetError());
-						SDLNet_TCP_Close(Iter_DataVal(TCPsocket));
-						RemoveElement(&iter);
+	For_Each(drawers,drawer){
+		if(Iter_Val(drawer,Drawer)->count==0) continue;
+		int used = SDLNet_CheckSockets(Iter_Val(drawer,Drawer)->set,0);
+		if(used==-1){
+			printf("failed to check sockets for recieving: %s\n",SDLNet_GetError());
+			return;
+		}else if(used>0){
+			//loop for ready
+			Drawer* draw = Iter_Val(drawer,Drawer);
+			for(int i = 0;i < DRAWSOCKSIZE;i++){
+				Sock* sock = &draw->socks[i];
+				if(SDLNet_SocketReady(sock->socket)>0){
+					//get message type
+					// TCPsocket sock->socket = ;
+					int msgType;
+					int gotN=SDLNet_TCP_Recv(sock->socket,&msgType,sizeof(MessageType));
+					if(gotN != sizeof(MessageType)){
+						//remove from sock set
+						if(RemoveSock(draw,i) && drawers.count!=0){
+							//drawer is now empty
+							DestroyDrawer(draw);
+							RemoveElement(&drawer);
+							break;
+						}
+						continue;
 					}
-					break;
-				}
-				lastRecieved=Iter_Data;
-				if(gotN==sizeof(MessageType) && msgType==Quit){
-					printf("ha ha, very funny\n");
-					unsigned int leng = 17;
-					void* packet = CreateStringPacket(DisplayText,"Ha ha very funny",&leng);
-					ReplyToClient(packet,leng);
-					free(packet);
-				}
-				//get message size
-				unsigned int msgSize;
-				gotN = SDLNet_TCP_Recv(clientSock,&msgSize,sizeof(unsigned int));
-				if(gotN!=sizeof(unsigned int)){
-					printf("error on get size: %s\n",SDLNet_GetError());
-					break;
-				}
-				void* msg = malloc(msgSize);
-				//get data from packet!
-				gotN=SDLNet_TCP_Recv(clientSock,msg,msgSize);
-				if(gotN!=msgSize){
-					printf("error: %s\n",SDLNet_GetError());
-					break;
-				}else
-				switch(msgType){
-					case DisplayText:{
-						printf("%s\n",(char*)msg); break;
+					lastRecieved=sock;
+					if(gotN==sizeof(MessageType) && msgType==Quit){
+						printf("ha ha, very funny\n");
+						unsigned int leng = 17;
+						void* packet = CreateStringPacket(DisplayText,"Ha ha very funny",&leng);
+						ReplyToClient(packet,leng);
+						free(packet);
 					}
-					default: printf("message type %d is not handled by the client yet! Get to work!\n",*(int*)msg);
-				}
-				free(msg);
-			}			
+					//get message size
+					unsigned int msgSize;
+					gotN = SDLNet_TCP_Recv(sock->socket,&msgSize,sizeof(unsigned int));
+					if(gotN!=sizeof(unsigned int)){
+						printf("error on get size: %s\n",SDLNet_GetError());
+						continue;
+					}
+					void* msg = malloc(msgSize);
+					//get data from packet!
+					gotN=SDLNet_TCP_Recv(sock->socket,msg,msgSize);
+					if(gotN!=msgSize){
+						printf("error: %s\n",SDLNet_GetError());
+						free(msg);
+						continue;
+					}else
+					switch(msgType){
+						case DisplayText:{
+							printf("%s\n",(char*)msg); break;
+						}
+						default: printf("message type %d is not handled by the client yet! Get to work!\n",msgType);
+					}
+					free(msg);
+				}			
+			}
 		}
+
 	}
 }
 
 void SendToAllClients(void* data,unsigned int dataSize){
 	SDL_LockMutex(sockMutex);
-	For_Each(clientSocks,iter){
-		if(!SendToSocket(Iter_DataVal(TCPsocket),data,dataSize)){
-			//remove from sock set
-			int used=SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data); 
-			if(used==-1){
-				printf("failed to delete sock from drawer!: %s\n",SDLNet_GetError());
-				SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data);
-			}else{
-				printf("Disconnecting\n");
-				SDLNet_TCP_Close(*(TCPsocket*)iter.this->data);
-				RemoveElement(&iter);
-			}
+	For_Each(drawers,drawIter){
+		Drawer* drawer = Iter_Val(drawIter,Drawer);
+		if(drawer->count==0)continue;
+		for(int i = 0;i < DRAWERSIZE;i++){
+			if(!IsThereSock(drawer,i)) continue;
+			if(!SendToSocket(drawer->socks[i].socket,data,dataSize))
+				printf("failed to reply: %s\n",SDLNet_GetError());
 		}
 	}
 	SDL_UnlockMutex(sockMutex);
@@ -134,12 +137,7 @@ void SendToAllClients(void* data,unsigned int dataSize){
 void KillConnection(){
 	printf("sending kill messege\n");
 	int msg = Quit;
-	For_Each(clientSocks,iter){
-		int sentN = SDLNet_TCP_Send(*((TCPsocket*)iter.this->data), &msg, sizeof(msg));
-		if(sentN != sizeof(msg)){
-			printf("failed to send all data (%d of %d sent): %s\n",sentN,(int)sizeof(msg),SDLNet_GetError());
-		}
-	}
+	SendToAllClients(&msg,sizeof(msg));
 }
 
 
@@ -198,20 +196,17 @@ int main(int argv, char** argc){
 	KillConnection();
 	
 	//disconnect
-	For_Each(clientSocks,iter){
-		int used=SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data); 
-		if(used==-1){
-			printf("failed to delete sock from drawer!: %s\n",SDLNet_GetError());
-			SDLNet_TCP_DelSocket(sockSet,*(TCPsocket*)Iter_Data);
-		}else{
-			SDLNet_TCP_Close(*(TCPsocket*)iter.this->data);
-			RemoveElement(&iter);
-			printf("Disconnected!\n");
+	For_Each(drawers,drawIter){
+		Drawer* drawer = Iter_Val(drawIter,Drawer);
+		for(int i = 0;i < DRAWERSIZE;i++){
+			if(IsThereSock(drawer,i)) RemoveSock(drawer,i);
 		}
+		DestroyDrawer(drawer);
+		RemoveElement(&drawIter);
 	}
-	SDLNet_TCP_Close(sock);
+	if(drawers.count)printf("WHAT!? drawer.count is not zero, it's, it's... %d!!!\n",drawers.count);
 	//cleanup
-	SDLNet_FreeSocketSet(sockSet);
+	SDLNet_TCP_Close(sock);
 	SDLNet_FreeSocketSet(servSockSet);
 	CleanupLua();
 	SDLNet_Quit();

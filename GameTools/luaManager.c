@@ -41,9 +41,9 @@ void RefreshLuaFiles(){
 		printf("Couldn't open directory \".\"\n");
 }
 void RefreshCmdFile() {
-	For_Each(luaFiles) {
-		if (strcmp(iter.this->data, "commands.lua") == 0) {
-			RemoveElement(&iter);
+	For_Each(luaFiles,fileIter) {
+		if (strcmp(Iter_Val(fileIter,char), "commands.lua") == 0) {
+			RemoveElement(&fileIter);
 			break;//found the file.
 		}
 	}
@@ -60,11 +60,11 @@ void RefreshCmdFile() {
 }
 void ExecuteLuaFile(char* fileName){//ExecuteLuaFile("dir");
 	// List iter=luaFiles;
-	For_Each(luaFiles){
+	For_Each(luaFiles,fileIter){
 		char buff[256]={0};//assuming this is zeroed by default
 		memcpy(buff,fileName,strlen(fileName));//strleng doesn't include \0
 		strcat(buff,".lua");
-		if(strcmp(iter.this->data,buff)==0){
+		if(strcmp(Iter_Val(fileIter,void),buff)==0){
 			if(luaL_dofile(state,buff)){
 				printf("error: %s\n",lua_tostring(state,-1));
 				lua_close(state);
@@ -110,9 +110,9 @@ void ParseCmdLine(){
 	//contiguize chunks into one
 	char* bigString = malloc(byteCount);
 	int start=0;
-	For_Each(chunks){
-		memcpy(bigString+start,iter.this->data,iter.this->dataSize-1);
-		start+=(int)iter.this->dataSize-1;//remove the \0
+	For_Each(chunks,chunkIter){
+		memcpy(bigString+start,Iter_Val(chunkIter,void),chunkIter.this->dataSize-1);
+		start+=(int)chunkIter.this->dataSize-1;//remove the \0
 	}
 	*(bigString+byteCount-1)=(char)0;//add the null character to the end
 	*(bigString+byteCount-2)=(char)0;//get rid of the \n
