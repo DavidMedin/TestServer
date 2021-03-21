@@ -1,9 +1,10 @@
 #pragma once
 #include <SDL2/sdl_net.h>
 #define DRAWERSIZE 16
-#define DRAWSOCKSIZE DRAWERSIZE/sizeof(char)
+#define DRAWSOCKSIZE DRAWERSIZE/(sizeof(char)*8)
 typedef struct{
     TCPsocket socket;
+    int loggedIn;
     char* name;
 }Sock;
 

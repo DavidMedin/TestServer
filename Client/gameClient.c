@@ -56,7 +56,7 @@ int SDLCALL Recieve(void* param){
 			//get data from packet!
 			gotN=SDLNet_TCP_Recv(sock,msg,msgSize);
 			if(gotN!=msgSize){
-				printf("error: %s\n",SDLNet_GetError());
+				printf("error, gotN & msgSize mismatch {%d -> %d}: %s\n",SDLNet_GetError(),gotN,msgSize);
 				free(msg);
 				break;
 			}else
@@ -111,7 +111,6 @@ int main(int argv,char** argc){
 		return 0;
 	}
 	printf("Connected!\n");}
-
 
 	recieveThred = SDL_CreateThread(Recieve,"Recieve",NULL);
 	while(!cmdQuit) {

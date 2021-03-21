@@ -4,12 +4,10 @@
 IPaddress ip;
 TCPsocket sock;SDLNet_SocketSet servSockSet;
 
+List drawers={0};
+
 int cmdQuit=0;
 SDL_mutex* cmdSignal;
-
-List drawers={0};
-SDL_mutex* sockMutex;
-
 
 int SDLCALL ThdParseCmd(void* param){
 	while(!cmdQuit) ParseCmdLine();
@@ -31,7 +29,7 @@ void Connect(){
 			For_Each(drawers,iter){
 				if(Iter_Val(iter,Drawer)->count<DRAWERSIZE){
 					//this drawer isn't full
-					DepositSock(Iter_Val(iter,Drawer),(Sock){tmpSock,"hi"});
+					DepositSock(Iter_Val(iter,Drawer),(Sock){tmpSock,0,"hi"});
 					found=1;
 				}
 			}
@@ -39,7 +37,7 @@ void Connect(){
 				//create drawer
 				Drawer* draw = MakeDrawer();
 				PushBack(&drawers,draw,sizeof(Drawer));
-				DepositSock(draw,(Sock){tmpSock,"hi"});
+				DepositSock(draw,(Sock){tmpSock,0,"hi"});
 			}
 			// PushBack(&clientSocks,allocSock,sizeof(TCPsocket));
 			SDL_UnlockMutex(sockMutex);
@@ -66,7 +64,7 @@ void Recieve(){
 		}else if(used>0){
 			//loop for ready
 			Drawer* draw = Iter_Val(drawer,Drawer);
-			for(int i = 0;i < DRAWSOCKSIZE;i++){
+			for(int i = 0;i < DRAWERSIZE;i++){
 				Sock* sock = &draw->socks[i];
 				if(SDLNet_SocketReady(sock->socket)>0){
 					//get message type
@@ -83,7 +81,7 @@ void Recieve(){
 						}
 						continue;
 					}
-					lastRecieved=sock;
+					lastRecieved=&sock->socket;
 					if(gotN==sizeof(MessageType) && msgType==Quit){
 						printf("ha ha, very funny\n");
 						unsigned int leng = 17;
@@ -107,9 +105,9 @@ void Recieve(){
 						continue;
 					}else
 					switch(msgType){
-						case DisplayText:{
-							printf("%s\n",(char*)msg); break;
-						}
+						case DisplayText:{HandleDisplayText(sock,msgSize,msg); break;}
+						case Login:{HandleLogIn(sock,msgSize,msg); break;}
+						case TextToUser:{HandleTextToUser(sock,msgSize,msg);break;}
 						default: printf("message type %d is not handled by the client yet! Get to work!\n",msgType);
 					}
 					free(msg);

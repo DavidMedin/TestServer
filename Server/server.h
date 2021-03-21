@@ -11,12 +11,16 @@
 #include "luaManager.h"
 #include "luaServerLib.h"
 #include "socks.h"
+#include "messageHandler.h"
 // #define strtok_safe
 #ifdef _WIN64
 #define strtok_safe strtok_s
 #else
 #define strtok_safe strtok_r
 #endif
+
+extern List drawers;
+SDL_mutex* sockMutex;
 
 void KillConnection();
 void SendToAllClients(void* data,unsigned int dataSize);

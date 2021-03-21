@@ -1,9 +1,13 @@
 #pragma once
 #include <SDL2/SDL_net.h>
 #define _CRT_SECURE_NO_WARNINGS 1//linux doesn't use it, I won't
+
+#define HEADERSIZE sizeof(MessageType)+sizeof(unsigned int)
 typedef enum{
 	Quit,
-	DisplayText
+	DisplayText,
+	Login,
+	TextToUser
 }MessageType;
 //PACKET HEADER FORMAT
 /*
@@ -16,5 +20,7 @@ typedef enum{
 
 //WARNING: allocates new data, you must clean yourself
 void* CreateStringPacket(MessageType msg,char* str,unsigned int* leng);
+//will write offset to next available data slot to allocSize
+void* CreateDataPacket(MessageType msg,unsigned int* allocSize,void* data,unsigned int dataSize);
 
 int SendToSocket(TCPsocket sock,void* data,unsigned int dataSize);
