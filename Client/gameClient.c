@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_net.h>
-#include <signal.h>
-#include <luaManager.h>
-#include "luaClientLib.h"
 
 #include "gameClient.h"
 IPaddress serverAddress;
@@ -112,10 +106,47 @@ int main(int argv,char** argc){
 	}
 	printf("Connected!\n");}
 
+	SDL_Window* window = SDL_CreateWindow("David's Game Client",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,800,800,0);
+	if(!window){
+		printf("failed to intialize window: %s\n",SDL_GetError());
+		Exit();
+		return 1;
+	}
+	if(gl3wInit()){
+		printf("failed to intialize glfw\n");
+		Exit();
+		return 1;
+	}
+	SDL_GLContext glContext = SDL_GL_CreateContext(window);
+	igCreateContext(NULL);
+	ImGui_ImplSDL2_InitForOpenGL(window,glContext);
+	ImGui_ImplOpenGL3_Init("#version 130");
+	igStyleColorsDark(NULL);
+
+	//NOTE: Look at cimgui_extras.h/.cpp in cimgui!
+	//maybe just write cmakelists youself for cimgui-make (maybe in same file)
 	recieveThred = SDL_CreateThread(Recieve,"Recieve",NULL);
 	while(!cmdQuit) {
-		ParseCmdLine();
-		SDL_Delay(500);
+		// ParseCmdLine();
+		SDL_Event event;
+		if(SDL_PollEvent(&event)){
+			// ImGui_ImplSDL2_ProcessEvent(&event);
+			if(event.type == SDL_QUIT){
+				cmdQuit=1;
+				break;
+			}
+		}
+		// ImGui_ImplOpenGL3_NewFrame();
+		// ImGui_ImplSDL2_NewFrame(window);
+		// igNewFrame();
+
+		// igRender();
+		// SDL_GL_MakeCurrent(window,glContext);
+		// // glClearColor(.1f,.1f,.1f,1);
+		// // glClear(GL_COLOR_BUFFER_BIT);
+
+		// SDL_GL_SwapWindow(window);
+		// SDL_Delay(500);
 	}
 	int status;
 	SDL_WaitThread(recieveThred,&status);
