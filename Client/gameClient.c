@@ -106,18 +106,19 @@ int main(int argv,char** argc){
 	}
 	printf("Connected!\n");}
 
-	SDL_Window* window = SDL_CreateWindow("David's Game Client",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,800,800,0);
+	SDL_Window* window = SDL_CreateWindow("David's Game Client",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,800,800,SDL_WINDOW_OPENGL);
 	if(!window){
 		printf("failed to intialize window: %s\n",SDL_GetError());
 		Exit();
 		return 1;
 	}
-	if(gl3wInit()){
+	SDL_GLContext glContext = SDL_GL_CreateContext(window);
+	SDL_GL_SetSwapInterval(1);
+	if(Do_gl3wInit()){
 		printf("failed to intialize glfw\n");
 		Exit();
 		return 1;
 	}
-	SDL_GLContext glContext = SDL_GL_CreateContext(window);
 	igCreateContext(NULL);
 	ImGui_ImplSDL2_InitForOpenGL(window,glContext);
 	ImGui_ImplOpenGL3_Init("#version 130");
@@ -128,24 +129,36 @@ int main(int argv,char** argc){
 	recieveThred = SDL_CreateThread(Recieve,"Recieve",NULL);
 	while(!cmdQuit) {
 		// ParseCmdLine();
+		// glClearColor(.1f,.1f,.1f,1);
+		// glClear(GL_COLOR_BUFFER_BIT);
+
 		SDL_Event event;
 		if(SDL_PollEvent(&event)){
-			// ImGui_ImplSDL2_ProcessEvent(&event);
+			ImGui_ImplSDL2_ProcessEvent(&event);
 			if(event.type == SDL_QUIT){
 				cmdQuit=1;
 				break;
 			}
 		}
-		// ImGui_ImplOpenGL3_NewFrame();
-		// ImGui_ImplSDL2_NewFrame(window);
-		// igNewFrame();
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplSDL2_NewFrame(window);
+		igNewFrame();
 
-		// igRender();
-		// SDL_GL_MakeCurrent(window,glContext);
-		// // glClearColor(.1f,.1f,.1f,1);
-		// // glClear(GL_COLOR_BUFFER_BIT);
-
-		// SDL_GL_SwapWindow(window);
+		//imgui
+		// if(igBegin("Tool",NULL,0)){
+		// 	igText("yello");
+		// 	igEnd();
+		// }
+		bool open=1;
+		igShowDemoWindow(&open);
+		
+		igRender();
+		SDL_GL_MakeCurrent(window, glContext);
+		// glViewport(0, 0, 800, 800);
+		glClearColor(.1f, .1f, .1f, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
+		SDL_GL_SwapWindow(window);
 		// SDL_Delay(500);
 	}
 	int status;
