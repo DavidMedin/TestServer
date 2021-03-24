@@ -106,6 +106,7 @@ int main(int argv,char** argc){
 	}
 	printf("Connected!\n");}
 
+	//initialize window stuff
 	SDL_Window* window = SDL_CreateWindow("David's Game Client",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,800,800,SDL_WINDOW_OPENGL);
 	if(!window){
 		printf("failed to intialize window: %s\n",SDL_GetError());
@@ -124,13 +125,10 @@ int main(int argv,char** argc){
 	ImGui_ImplOpenGL3_Init("#version 130");
 	igStyleColorsDark(NULL);
 
-	//NOTE: Look at cimgui_extras.h/.cpp in cimgui!
-	//maybe just write cmakelists youself for cimgui-make (maybe in same file)
+	//main loop
 	recieveThred = SDL_CreateThread(Recieve,"Recieve",NULL);
 	while(!cmdQuit) {
 		// ParseCmdLine();
-		// glClearColor(.1f,.1f,.1f,1);
-		// glClear(GL_COLOR_BUFFER_BIT);
 
 		SDL_Event event;
 		if(SDL_PollEvent(&event)){
@@ -145,27 +143,34 @@ int main(int argv,char** argc){
 		igNewFrame();
 
 		//imgui
-		// if(igBegin("Tool",NULL,0)){
-		// 	igText("yello");
-		// 	igEnd();
-		// }
-		bool open=1;
-		igShowDemoWindow(&open);
+		if(igBegin("Tool",NULL,0)){
+			igText("yello");
+			igEnd();
+		}
+		// bool open=1;
+		// igShowDemoWindow(&open);
 		
 		igRender();
 		SDL_GL_MakeCurrent(window, glContext);
+		//is this needed for window resizing?
 		// glViewport(0, 0, 800, 800);
 		glClearColor(.1f, .1f, .1f, 1);
 		glClear(GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
 		SDL_GL_SwapWindow(window);
-		// SDL_Delay(500);
 	}
 	int status;
 	SDL_WaitThread(recieveThred,&status);
 	SDLNet_TCP_DelSocket(sockSet,sock);
 	SDLNet_TCP_Close(sock);
 	SDLNet_FreeSocketSet(sockSet);
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+	igDestroyContext(NULL);
+	SDL_GL_DeleteContext(glClear);
+	SDL_DestroyWindow(window);
+	window=NULL;
 	//disconnect
 	Exit();
 	return 0;
