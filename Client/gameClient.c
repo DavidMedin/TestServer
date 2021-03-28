@@ -6,6 +6,10 @@ SDLNet_SocketSet sockSet;
 
 SDL_Thread* recieveThred;
 
+
+//each line is max 255 characters
+int nextLine=0;
+char* lines[20] = {0};
 int cmdQuit=0;
 void interuptHandler(int nothing){
 	cmdQuit=1;
@@ -19,6 +23,26 @@ void Exit(){
 	lua_close(state);
 	SDLNet_Quit();
 	SDL_Quit();
+}
+
+void PutConsole(char* string,...){
+	
+	if(lines[nextLine]!=NULL){
+		free(lines[nextLine]);
+	}
+	char* buffer = malloc(255);
+	int len = strlen(string);
+	va_list valist;
+	va_start(valist,string);
+	int written=vsprintf(buffer,string,valist);
+	va_end(valist);
+	if(written < 0){
+		printf("PutConsole failed to write!\n");
+	}if(written != len){
+		PutConsole("Failed to write all data! (%d of %d)\n",written,len);
+	}
+	lines[nextLine++]=buffer;
+	if(nextLine>19) nextLine=0;
 }
 
 int SDLCALL Recieve(void* param){
@@ -56,11 +80,23 @@ int SDLCALL Recieve(void* param){
 			}else
 			switch(msgType){
 				case DisplayText:{
-					printf("%s\n",(char*)msg); break;
+					//add to lines
+					//if(lines[nextLine]!=NULL){
+					//	free(lines[nextLine]);
+					//}
+					//lines[nextLine++]=msg;
+					//if(nextLine>19) nextLine=0;
+					PutConsole(msg);
+					free(msg);
+					break;
+					//printf("%s\n",(char*)msg); break;
 				}
-				default: printf("message type %d is not handled by the client yet! Get to work!\n",*(int*)msg);
+				default:{
+					printf("message type %d is not handled by the client yet! Get to work!\n",msgType);
+					free(msg);
+				}
 			}
-			free(msg);
+			//kfree(msg);
 		}
 		SDL_Delay(500);
 	}
@@ -127,6 +163,8 @@ int main(int argv,char** argc){
 
 	//main loop
 	recieveThred = SDL_CreateThread(Recieve,"Recieve",NULL);
+	//nextLine++;
+	//lines[0] = "This is a test string";
 	while(!cmdQuit) {
 		// ParseCmdLine();
 
@@ -142,13 +180,43 @@ int main(int argv,char** argc){
 		ImGui_ImplSDL2_NewFrame(window);
 		igNewFrame();
 
-		//imgui
-		if(igBegin("Tool",NULL,0)){
-			igText("yello");
-			igEnd();
+		ImVec2 vector = {0};
+		vector.y= -( igGetStyle()->ItemSpacing.y + igGetFrameHeightWithSpacing() );
+		if(igBegin("Console",NULL,0)){
+			igBeginChildStr("scroller",vector,true,0);
+			int i = nextLine;
+			while(1){
+				if(lines[i]!=NULL){
+					igText(lines[i]);
+				}
+				if(++i>19){
+					i=0;
+				}
+				if(i==nextLine) break;
+			}
+			igEndChild();
 		}
-		// bool open=1;
-		// igShowDemoWindow(&open);
+		ImGuiInputTextFlags textInputFlags = ImGuiInputTextFlags_EnterReturnsTrue;
+		char inputBuffer[255] = {0};
+		if(igInputText("input",inputBuffer,255,textInputFlags,NULL,NULL)){
+			//enter was pressed!
+ 
+			RefreshCmdFile();
+
+			int rez;
+			if((rez=luaL_loadstring(state,inputBuffer))==LUA_OK){
+				if(lua_pcall(state,0,0,0)!=LUA_OK)
+				printf("oh no, lua threw an error! : %s\n",lua_tostring(state,-1));
+			}else{
+				if(rez==LUA_ERRSYNTAX)
+					printf("Cmd line syntax error: %s\n",lua_tostring(state,-1));
+				else
+					printf("cmd line memory error: %s\n",lua_tostring(state,-1));
+			}
+		}
+		igEnd();
+		bool open=1;
+		igShowDemoWindow(&open);
 		
 		igRender();
 		SDL_GL_MakeCurrent(window, glContext);
