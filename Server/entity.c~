@@ -22,10 +22,6 @@ Sparse MakeSparse(int typeSize, int initCount){
 	return array;
 }
 
-void InitECS(){
-	int entityCount = 300;
-}
-
 void AddEntity(Entity ent, void* data){
 	//use first index in recycle is going to be added	
 }

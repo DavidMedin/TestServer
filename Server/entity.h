@@ -1,49 +1,32 @@
 #pragma once
 #include "list.h"
-List types;//list of strings
 
+typedef int Entity;// first 2 bytes is the index, last 2 bytes is the verison
 
-typedef struct{int index,uuid;} Entity;//Somehow indexes into entities
-List entities;//is a list of Pools, which contain entity_t's
+//remember to inc count if you add
+typedef struct{
+	int allocSize;
+	int count;
+	void* array;
+	int typeSize;
+}Array;
+Array MakeArray(int typeSize,int initCount,int index);
+void ArrAddItem(Array* arr,void* data);
 
 typedef struct{
-	Link me;//references the link in openPools that is this instance
-	int openN;
-	char open[256];//are offsets into itself, that when hit, represent an open space
-	void* data[255];
-}Pool;
-List openPools;
-void* GetPool(Pool* pool, int i);
+	Array sparse;
+	Array packed;
+}Sparse;
+Sparse MakeSparse(int typeSize, int initCount);
+void AddEntity(Entity ent,void* data);
 
+List componentArrs;
 
-struct entity_t{
-	List components;
-};
-typedef struct{
-	void* data;
-	char* type;
-}Component;
+int startRec;
+int recycleCount;
+Array recycle;
 
-typedef struct{
-	struct Vec2{float x,y;} pos;
-	float mag;
-}Doohicky;
-#define Find(ent,type) (type*)Find_i(ent,#type)
-void* Find_i(struct entity_t ent,char* string){
-	//iterate through Component list of entity and find type;
-}
-#define ALOT 123213
-void MyFunciton(struct entity_t ent){
-	Doohicky* hick = Find(ent,Doohicky);
-	hick->pos.x += ALOT;
-}
-void AlteringFunction(struct entity_t ent){
-	//check all entities for collitions
-	Entity bumped_id = GetCollision(ent);
-	struct entity_t* bumped = GetEntity(bumped_id);
-	if(!bumped){
-		//faile
-	}
-	bumped->components.start.data->Quizner=  123;
+typedef void (*System)(Entity);
+Array systems;
 
-}
+void Update(float dt);
