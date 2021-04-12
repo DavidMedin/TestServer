@@ -152,7 +152,7 @@ int main(int argv, char** argc){
 		return 0;
 	}
 	InitLua(OpenLuaServerLib);//wasn't here for some reason
-	printf("hello, my guy\n");
+	printf("hello, my guy, %d\n",VA_OPT_SUPPORTED);
 	
 	// sockSet=SDLNet_AllocSocketSet(16);
 	// if(!sockSet){

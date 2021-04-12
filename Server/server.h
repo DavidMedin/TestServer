@@ -11,6 +11,7 @@
 #include "luaManager.h"
 #include "luaServerLib.h"
 #include "socks.h"
+#include "entity.h"
 #include "messageHandler.h"
 // #define strtok_safe
 #ifdef _WIN64

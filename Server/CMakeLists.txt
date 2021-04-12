@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 20)
 set(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}scripts/buildsystems/vcpkg.cmake)
 project(Server)
 
@@ -19,6 +19,7 @@ message(STATUS ${GameTools_Root})
 if(MSVC)
 	find_path(DIRENT_INCLUDE_DIRS "dirent.h")
 	set_target_properties(Server PROPERTIES 
+	target_compile_options(Server PRIVATE "/Zc:preprocessor")
     VS_DEBUGGER_WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
