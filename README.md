@@ -7,7 +7,7 @@ command line).
 ![clients](https://user-images.githubusercontent.com/45665232/118322235-6ff74d80-b4c4-11eb-9520-d873e012d39f.png)
 
 # Warning
-If you intend to run this, the server will want though the firewall, so if you don't want that, you can't run it! Maybe, I haven't tested if you click "no".
+If you intend to run this, the server will want to get through the firewall, so if you don't want that, you can't run it! Maybe, I haven't tested if you click "no".
 
 # What can you do with it?
 all inputs must be surrounded by either double (") or single (') quotes.
