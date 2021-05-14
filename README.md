@@ -5,7 +5,8 @@ It is two programs, a server and a client. I was initially going to make a multi
 stopped after I got basic text to be transfered between the clients and server. Here's a screenshot of 3 clients (graphical windows) and one server (top left
 command line).
 ![clients](https://user-images.githubusercontent.com/45665232/118322235-6ff74d80-b4c4-11eb-9520-d873e012d39f.png)
-
+# Installation
+On the right side of this github reposoitory, click the "releases" page and download and unzip the "TestServer.zip" file. To run the client, go into the Client folder and double click the Client.exe program. To run the server, go into the Server folder and double click the Server.exe program.
 # Warning
 If you intend to run this, the server will want to get through the firewall, so if you don't want that, you can't run it! Maybe, I haven't tested if you click "no".
 
